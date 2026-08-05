@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelly Criterion Lab — The Professional Masterclass</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --surface-elevated: #21262d;
+            --border: #30363d;
+            --primary: #2ea043;
+            --primary-glow: rgba(46, 160, 67, 0.4);
+            --text: #c9d1d9;
+            --text-secondary: #8b949e;
+            --danger: #f85149;
+            --warning: #d29922;
+            --accent: #58a6ff;
+            --sidebar: #010409;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Fixed Navigation Tabs */
+        nav.tabs {
+            position: sticky;
+            top: 0;
+            background: var(--sidebar);
+            display: flex;
+            justify-content: flex-start;
+            padding: 8px;
+            z-index: 2000;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            gap: 8px;
+            scrollbar-width: none;
+        }
+        nav.tabs::-webkit-scrollbar { display: none; }
+
+        .tab-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            white-space: nowrap;
+            transition: 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .tab-link.active {
+            background: var(--surface-elevated);
+            color: var(--primary);
+            border-color: var(--border);
+            font-weight: bold;
+        }
+
+        .hub-link {
+            color: var(--accent) !important;
+            border-right: 1px solid var(--border);
+            padding-right: 20px !important;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 0 40px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 40px;
+        }
+
+        h1 { font-size: clamp(32px, 8vw, 48px); color: var(--primary); font-family: 'JetBrains Mono', monospace; margin: 0; letter-spacing: -2px; }
+        h2 { font-size: 24px; color: var(--accent); font-family: 'JetBrains Mono', monospace; margin-top: 0; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 40px;
+        }
+
+        /* Definitions Table */
+        .def-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .def-item {
+            background: var(--sidebar);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .def-name { color: var(--primary); font-family: 'JetBrains Mono', monospace; font-weight: bold; margin-bottom: 8px; }
+        .def-tech { font-size: 11px; color: var(--warning); font-family: 'JetBrains Mono', monospace; margin-bottom: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 4px; }
+        .def-mental { font-size: 13px; color: var(--accent); border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 8px; }
+
+        .formula-box {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--primary);
+            font-size: 20px;
+            margin: 20px 0;
+            border: 1px dashed var(--primary);
+        }
+
+        /* Simulator Styles */
+        .simulator-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 850px) { .simulator-grid { grid-template-columns: 1fr; } }
+
+        .sim-panel { background: #0a0e14; border-radius: 8px; padding: 20px; border: 1px solid #1c2128; }
+        .coin-box { text-align: center; margin-bottom: 24px; }
+        .coin-img { width: 150px; height: 150px; border-radius: 50%; box-shadow: 0 0 30px rgba(255,255,255,0.05); margin-bottom: 16px; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .coin-rigging { font-size: 12px; color: #6e7681; }
+
+        .sim-stat-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1c2128; font-family: 'JetBrains Mono', monospace; }
+        .sim-val-large { color: #3fb950; font-size: 20px; font-weight: bold; }
+
+        .btn-group { display: flex; gap: 8px; margin-bottom: 16px; }
+        .btn-tab { flex: 1; padding: 10px; background: transparent; border: 1px solid #30363d; color: #8b949e; cursor: pointer; border-radius: 6px; font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+        .btn-tab.active { background: #161b22; color: #c9d1d9; border-color: #58a6ff; }
+
+        .btn-action { width: 100%; padding: 12px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; }
+        .btn-action:hover { background: #2ea043; }
+
+        .chart-label { font-size: 11px; text-transform: uppercase; color: #6e7681; letter-spacing: 1px; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; }
+
+        /* Feedback Elements */
+        .feedback {
+            margin-top: 24px;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: none;
+            background: #0d1117;
+        }
+        .feedback.visible { display: block; }
+        .feedback.correct { border-color: var(--primary); box-shadow: 0 0 15px rgba(46, 160, 67, 0.2); }
+        .feedback.wrong { border-color: var(--danger); }
+
+        #progress-bar { position: fixed; top: 0; left: 0; height: 4px; background: var(--primary); z-index: 3000; width: 0%; }
+
+        .visual-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .step-card { background: var(--sidebar); border: 1px solid var(--border); padding: 12px; border-radius: 6px; }
+
+        .gain-viz {
+            height: 40px;
+            background: var(--sidebar);
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            margin-top: 10px;
+        }
+        .gain-fill { background: var(--primary); height: 100%; transition: 1s ease; }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            appearance: none;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .example-box {
+            background: rgba(163, 113, 247, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .example-title { font-weight: bold; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; font-size: 13px; }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 8px; cursor: pointer; font-family:'JetBrains Mono'; font-size: 14px; }
+        .btn-outline:hover { border-color: var(--primary); }
+
+        select { background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+        .level-badge { display: inline-block; padding: 4px 12px; border-radius: 100px; background: var(--surface-elevated); color: var(--accent); font-size: 10px; font-weight: bold; margin-bottom: 12px; }
+
+        /* Stocks UI */
+        .stock-ticker { display: flex; justify-content: space-between; background: #000; padding: 12px 24px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 24px; font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+        .ticker-up { color: #3fb950; } .ticker-down { color: #f85149; }
+    </style>
+</head>
+<body>
+    <div id="progress-bar"></div>
+
+    <nav class="tabs">
+        <a href="https://mikefromcornell.github.io/" class="tab-link hub-link">🚀 All Projects</a>
+        <a href="#defs" class="tab-link active">Definitions</a>
+        <a href="#conversion-mastery" class="tab-link">Conversion Mastery</a>
+        <a href="#edge-intro" class="tab-link">Edge Mastery</a>
+        <a href="#calculator" class="tab-link">Standard Lab</a>
+        <a href="#pro-sim" class="tab-link">Pro Simulator</a>
+        <a href="#stocks" class="tab-link">Stock Trading</a>
+        <a href="#time-to-target" class="tab-link">Time to Target</a>
+        <a href="#games" class="tab-link">Practice Games</a>
+    </nav>
+
+    <div class="container">
+        
+        <header>
+            <h1>KELLY CRITERION LAB</h1>
+            <p style="color: var(--text-secondary); margin-top: 10px;">The Professional Interface for Capital Allocation</p>
+        </header>
+
+        <!-- 1. Definitions -->
+        <section id="defs">
+            <h2>1. Technical Foundations</h2>
+            <div class="card">
+                <p>To master Kelly, you must speak the language of probability with precision.</p>
+                <div class="def-grid">
+                    <div class="def-item">
+                        <div class="def-name">Odds Against</div>
+                        <div class="def-tech">q / p</div>
+                        <div class="def-desc">Ratio of losing outcomes to winning outcomes.</div>
+                        <div class="def-mental"><strong>Dice Example:</strong> Odds against rolling a "6" are <strong>5 to 1</strong>. You have 5 ways to lose and 1 way to win.</div>
+                    </div>
+                    <div class="def-item">
+                        <div class="def-name">Decimal Odds</div>
+                        <div class="def-tech">Total Return / Stake</div>
+                        <div class="def-desc">Total cash returned including original stake.</div>
+                        <div class="def-mental"><strong>Dice Example:</strong> A "fair" payout for a single number is <strong>6.00</strong>. You get $6 total for every $1 you bet.</div>
+                    </div>
+                    <div class="def-item">
+                        <div class="def-name">B Factor (Payout)</div>
+                        <div class="def-tech">Decimal - 1</div>
+                        <div class="def-desc">Net profit per unit of stake.</div>
+                        <div class="def-mental"><strong>Dice Example:</strong> If you bet on "Even" (2.00 odds), your <strong>b factor is 1</strong>. You win $1 profit for every $1 bet.</div>
+                    </div>
+                    <div class="def-item">
+                        <div class="def-name">Edge</div>
+                        <div class="def-tech">bp - q</div>
+                        <div class="def-desc">Expected net profit per unit stake.</div>
+                        <div class="def-mental"><strong>Dice Example:</strong> Win on 1-4 (66.6% win). Payout is 2.00 (b=1). Edge = (1 * 0.66) - 0.33 = <strong>0.33</strong>.</div>
+                    </div>
+                    <div class="def-item" style="grid-column: span 2;">
+                        <div class="def-name">Kelly Criterion (f*)</div>
+                        <div class="def-tech">Edge / b</div>
+                        <div class="def-desc">The growth-maximizing fraction of wealth.</div>
+                        <div class="def-mental"><strong>Dice Example:</strong> With a <strong>33% Edge</strong> and <strong>2.00 payout (b=1)</strong>, Kelly says bet <strong>33%</strong> of your bankroll.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Triple Conversion Mastery -->
+        <section id="conversion-mastery">
+            <h2>2. Triple Conversion Mastery</h2>
+            <div class="card">
+                <p>Pros switch between these three formats in their head using the <strong>"Stake + Profit"</strong> mental model.</p>
+                
+                <div class="kid-explanation">
+                    <div class="kid-title">🧠 Intuitive Conversion: The Dice Rule</div>
+                    <p>Imagine a 6-sided die. You bet $1 on the number "6".
+                    <br><br>
+                    <strong>1. Odds Against (The Ratio):</strong> There are 5 ways to lose and 1 way to win. 
+                    <br><em>The Ratio:</em> <strong>5:1</strong>.
+                    <br><br>
+                    <strong>2. Decimal Odds (The Total):</strong> If you win, you get $5 profit plus your $1 stake back.
+                    <br><em>The Total:</em> <strong>6.00</strong> ($5 + $1).
+                    <br><br>
+                    <strong style="color:var(--primary)">The Mental Shortcut:</strong> 
+                    <br>• To get Decimal: <strong>Add 1 to the Ratio</strong> (5:1 &rarr; 5+1 = 6.00).
+                    <br>• To get Ratio: <strong>Subtract 1 from Decimal</strong> (4.00 &rarr; 4-1 = 3:1).
+                    </p>
+                </div>
+
+                <div class="def-grid">
+                    <div class="def-item" style="border-color: var(--primary);">
+                        <div class="def-name">Probability %</div>
+                        <div style="font-size: 13px;">How often you win.</div>
+                        <div class="def-mental"><strong>Shortcut:</strong> <code>100 / Total Pieces</code> (5:1 has 6 pieces &rarr; 16.6%)</div>
+                    </div>
+                    <div class="def-item" style="border-color: var(--accent);">
+                        <div class="def-name">Odds Against (X:1)</div>
+                        <div style="font-size: 13px;">Profit relative to Stake.</div>
+                        <div class="def-mental"><strong>Shortcut:</strong> "Losing sides to Winning sides."</div>
+                    </div>
+                    <div class="def-item" style="grid-column: span 2; border-color: var(--warning);">
+                        <div class="def-name">Decimal Odds</div>
+                        <div style="font-size: 13px;">Total multiplier of your money.</div>
+                        <div class="def-mental"><strong>Shortcut:</strong> <code>(Ratio + 1)</code>. Think "Total Payout."</div>
+                    </div>
+                </div>
+
+                <div class="example-box">
+                    <div class="example-title">Quick Conversion Table</div>
+                    <table style="width: 100%; font-family: 'JetBrains Mono'; font-size: 13px; text-align: center;">
+                        <tr style="color: var(--text-secondary);">
+                            <th>Win Chance</th>
+                            <th>Odds Against</th>
+                            <th>Decimal Odds</th>
+                        </tr>
+                        <tr><td>50%</td><td>1:1</td><td>2.00</td></tr>
+                        <tr><td>33.3%</td><td>2:1</td><td>3.00</td></tr>
+                        <tr><td>25%</td><td>3:1</td><td>4.00</td></tr>
+                        <tr><td>20%</td><td>4:1</td><td>5.00</td></tr>
+                        <tr><td>16.6%</td><td>5:1</td><td>6.00</td></tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Edge Intro -->
+        <section id="edge-intro">
+            <h2>2. Edge Calculation Mastery</h2>
+            <div class="card">
+                <p>Edge is the mathematical superiority of your win chance over the odds offered. There are three primary ways to calculate it:</p>
+                
+                <h3>Approach 1: The Multiplier (Most Robust)</h3>
+                <p style="font-size: 14px;">Ideal for any decimal odds.</p>
+                <div class="formula-box">Edge = (Win% × Decimal Odds) - 1</div>
+                
+                <h3>Approach 2: Win Benefit vs Loss Penalty</h3>
+                <p style="font-size: 14px;">Great for head math with profit ratios.</p>
+                <div class="formula-box">Edge = (Win% × b) - Loss%</div>
+
+                <h3>Approach 3: Probability Gap (Even Money)</h3>
+                <p style="font-size: 14px;">Only for 2.00 odds (Even money).</p>
+                <div class="formula-box">Edge = Win% - Loss%</div>
+                
+                <div class="example-box">
+                    <div class="example-title">Example: Dice Game</div>
+                    <p style="font-size: 14px;">You win if you roll 1 or 2 (33.3% chance). Payout is 4.00 (3 to 1).</p>
+                    <ul style="font-size: 13px; color: var(--text-secondary); line-height: 1.8;">
+                        <li><strong>Method 1:</strong> (0.333 × 4.00) - 1 = 1.332 - 1 = <strong>33.2% Edge</strong></li>
+                        <li><strong>Method 2:</strong> (0.333 × 3) - 0.666 = 0.999 - 0.666 = <strong>33.3% Edge</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Standard Lab -->
+        <section id="calculator">
+            <h2>3. Laboratory Calculator</h2>
+            <div class="card">
+                <div class="input-group">
+                    <label>Win Probability: <span id="val-p" style="color:var(--primary); font-weight: bold;">55%</span></label>
+                    <input type="range" id="slip-p" min="1" max="99" value="55" oninput="recalc()">
+                </div>
+                <div class="input-group">
+                    <label>Decimal Odds: <span id="val-b" style="color:var(--primary); font-weight: bold;">2.00</span></label>
+                    <input type="range" id="slip-b" min="101" max="500" value="200" oninput="recalc()">
+                </div>
+                <div class="formula-box">
+                    <span id="calc-result" style="font-size: 36px;">10.0%</span>
+                </div>
+                <div class="chart-label">Growth Curve (Geometric Mean)</div>
+                <div style="height: 200px; margin-bottom: 24px;"><canvas id="utilityChart"></canvas></div>
+                <div class="chart-label">Sample 50-Trade Path</div>
+                <div style="height: 200px;"><canvas id="growthChart"></canvas></div>
+            </div>
+        </section>
+
+        <!-- 4. Pro Simulator -->
+        <section id="pro-sim">
+            <h2>4. Professional Trading Simulator</h2>
+            <div class="simulator-grid">
+                <div class="sim-panel">
+                    <div class="coin-box">
+                        <div class="coin-rigging">Heads lands <span id="rig-val" style="color:#58a6ff">60.0%</span> of the time.</div>
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/aa/2015_Kennedy_Half_Dollar_Obverse.png" class="coin-img" id="sim-coin">
+                    </div>
+                    <div class="sim-stat-row"><span>BALANCE</span><span class="sim-val-large" id="sim-balance">$10,000.00</span></div>
+                    <div class="sim-stat-row"><span>BET $</span><span id="sim-bet-amount" style="font-weight:bold; color:white;">2,000.00</span></div>
+                    <div class="btn-group">
+                        <button class="btn-tab active" id="btn-heads" onclick="setSide('heads')">HEADS</button>
+                        <button class="btn-tab" id="btn-tails" onclick="setSide('tails')">TAILS</button>
+                    </div>
+                    <button class="btn-action" onclick="flipOnce()" style="background:#3fb950; color:#0d1117">🟡 Flip Once</button>
+                    <div style="font-size: 11px; color: #3fb950; text-align: center; margin-bottom: 16px; font-family:'JetBrains Mono';">
+                        Conservative • log <span id="log-growth">+0.00%</span> • stake <span id="stake-pct">0.0%</span>
+                    </div>
+                    <div style="background:#161b22; padding:16px; border-radius:8px; border:1px solid #30363d;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label style="font-size: 11px; color: #8b949e; margin:0;">BET % • Kelly <span id="target-kelly">20.0%</span></label>
+                            <div style="background:#0d1117; border:1px solid #30363d; padding:2px 8px; border-radius:4px; font-size:12px; color:#c9d1d9;"><span id="frac-input-val">20.0</span>%</div>
+                        </div>
+                        <input type="range" id="sim-fraction" min="0" max="100" value="20" style="width:100%" oninput="updateSimInputs()">
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:16px;">
+                        <button class="btn-action" id="btn-auto" onclick="toggleAuto()" style="flex:2; margin:0;">▶ Play</button>
+                        <select id="sim-strategy" style="flex:1.5;">
+                            <option value="fixed">Fixed %</option>
+                            <option value="kelly">Full Kelly</option>
+                            <option value="half">Half Kelly</option>
+                        </select>
+                    </div>
+                    <div style="margin-top:20px; font-family:'JetBrains Mono'; font-size:11px; color:#6e7681;">
+                        <div><span style="color:#8b949e">Space</span> flip the coin</div>
+                        <div><span style="color:#8b949e">Enter</span> start / stop auto-spin</div>
+                    </div>
+                </div>
+                <div class="sim-panel">
+                    <div class="chart-label">Bankroll Over Time • <span id="trade-count">0</span> trades</div>
+                    <div style="height: 180px; margin-bottom: 24px;"><canvas id="equityChart"></canvas></div>
+                    <div class="chart-label">Volatility • rolling 20-trade σ</div>
+                    <div style="height: 100px; margin-bottom: 24px;"><canvas id="volChart"></canvas></div>
+                    <div class="chart-label">Heads Rigging</div>
+                    <input type="range" id="rigging-slider" min="1" max="99" value="60" oninput="updateRigging()">
+                    <div class="sim-stat-row" style="margin-top: 20px; border: 1px solid #30363d; padding: 12px; border-radius: 8px;">
+                        <span>KELLY CRITERION OPTIMAL BET</span><span style="color:#58a6ff" id="kelly-output">20.0%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Stock Trading Section -->
+        <section id="stocks">
+            <h2>5. Kelly for Stock Trading</h2>
+            <div class="card">
+                <p>In stock trading, the goal is to determine <strong>Allocation</strong> and <strong>Leverage</strong>. Since stocks rarely go to zero, we use the average gain and average loss per trade.</p>
+                
+                <div class="stock-ticker">
+                    <span>S&P 500: <span class="ticker-up">+1.2%</span></span>
+                    <span>NASDAQ: <span class="ticker-up">+2.4%</span></span>
+                    <span>TSLA: <span class="ticker-down">-3.5%</span></span>
+                </div>
+
+                <h3>The Finance Position Formula</h3>
+                <div class="formula-box">Allocation = Edge / Stop Loss %</div>
+                <p style="font-size: 14px; color: var(--text-secondary); text-align: center;">Where <strong>Edge = (Win% * WinSize%) - (Loss% * LossSize%)</strong></p>
+
+                <div class="example-box">
+                    <div class="example-title">Example: Tech Trade Positioning</div>
+                    <ul style="font-size: 13px; line-height: 1.8;">
+                        <li><strong>Strategy:</strong> 60% win rate. Target +10% gain. Stop loss -5% loss.</li>
+                        <li><strong>1. Calculate Edge:</strong> (0.6 * 10%) - (0.4 * 5%) = 6% - 2% = <strong>4% Edge</strong></li>
+                        <li><strong>2. Position Size:</strong> 4% Edge / 5% Stop Loss = <strong>0.80 (80% Allocation)</strong></li>
+                    </ul>
+                </div>
+
+                <div class="example-box" style="border-color: var(--warning);">
+                    <div class="example-title">Leverage Guide</div>
+                    <p style="font-size: 14px;">If the Kelly calculation exceeds 100%, use leverage.
+                    <br><em>Example:</em> Edge of 6% with a 4% stop loss = <strong>150% (1.5x leverage)</strong>.</p>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <h3>Stock Strategy Challenge</h3>
+                    <div class="game-scenario"><div id="sq-scenario" style="font-size: 18px;">Win: 65%, Avg Gain: 8%, Stop Loss: 4%</div></div>
+                    <div class="answers-grid" id="sq-answers"></div>
+                    <div id="sq-feedback" class="feedback"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Time to Target -->
+        <section id="time-to-target">
+            <h2>6. Path to the Goal</h2>
+            <div class="card">
+                <p>How many trades does it take to reach your goal using geometric mean growth?</p>
+                <div style="margin-bottom: 24px;">
+                    <label>Target Bankroll ($): <span id="target-bank-val" style="color:var(--primary); font-weight:bold;">$100,000</span></label>
+                    <input type="range" id="target-bank-slider" min="10000" max="1000000" step="10000" value="100000" oninput="updatePath()">
+                </div>
+                <div class="formula-box" id="path-result">Estimated Trades: 42</div>
+                <div class="gain-viz"><div class="gain-fill" id="path-fill" style="width: 10%"></div></div>
+            </div>
+        </section>
+
+        <!-- 7. Practice Games -->
+        <section id="games">
+            <h2>7. Proficiency Training</h2>
+            
+            <div class="card">
+                <div class="level-badge" id="oq-level">Level 1: Coins</div>
+                <h3>Game: Guess the Odds</h3>
+                <div class="game-scenario"><div id="oq-text" style="font-size: 20px; font-weight: bold;">"Triple your money"</div></div>
+                <div class="answers-grid" id="oq-answers"></div>
+                <div id="oq-feedback" class="feedback"></div>
+            </div>
+
+            <div class="card">
+                <div class="level-badge">Level 1: Mixed</div>
+                <h3>Game: The Triple Switch</h3>
+                <p style="font-size: 13px; margin-bottom: 20px; color: var(--text-secondary);">Convert between Ratio, Decimal, and Probability instantly.</p>
+                <div class="game-scenario">
+                    <div id="tq-label" style="font-size: 11px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px;">CONVERT 4:1 TO %</div>
+                    <div id="tq-text" style="font-size: 32px; font-weight: bold; color: var(--accent);">20%</div>
+                </div>
+                <div class="answers-grid" id="tq-answers"></div>
+                <div id="tq-feedback" class="feedback"></div>
+            </div>
+
+            <div class="card">
+                <div class="level-badge" id="eq-level">Level 1: Coins</div>
+                <h3>Game: Estimate the Edge</h3>
+                <div class="game-scenario"><div id="eq-scenario" style="font-size: 18px;">Win: 55%, Odds: 2.00</div></div>
+                <div class="answers-grid" id="eq-answers"></div>
+                <div id="eq-feedback" class="feedback"></div>
+            </div>
+
+            <div class="card">
+                <div class="level-badge" id="bq-level">Level 1: Coins</div>
+                <h3>Game: Mental Bet Estimation</h3>
+                <div class="game-scenario">
+                    <div id="bq-p" style="font-size: 22px; font-weight: bold;">60% Win Prob</div>
+                    <div id="bq-b" style="font-size: 18px; color: var(--primary);">2.00 Odds</div>
+                </div>
+                <div style="margin: 24px 0; text-align: center;">
+                    <label>Your Estimate: <span id="guess-val" style="color:var(--primary); font-weight:bold; font-size: 24px;">10%</span></label>
+                    <input type="range" id="guess-slip" min="0" max="100" value="10" oninput="document.getElementById('guess-val').textContent = this.value + '%'">
+                </div>
+                <button class="btn-action" onclick="checkBQ()">Check Calculation</button>
+                <div id="bq-feedback" class="feedback"></div>
+            </div>
+        </section>
+
+        <footer><p>Kelly Criterion Lab — Educational Masterclass by mikefromcornell.github.io</p></footer>
+    </div>
+
+    <script>
+        const sim = { balance: 10000, rigging: 0.6, side: 'heads', fraction: 0.2, history: [10000], vols: [], trades: 0, autoInterval: null, equityChart: null, volChart: null };
+        const levels = [
+            { name: "Coins", pBase: 0.5, bBase: 2.0 },
+            { name: "Dice", pBase: 0.166, bBase: 6.0 },
+            { name: "Cards (Suits)", pBase: 0.25, bBase: 4.0 },
+            { name: "Cards (Ranks)", pBase: 0.077, bBase: 13.0 }
+        ];
+        let gameState = { oqLevel: 0, oqStep: 0, eqLevel: 0, eqStep: 0, bqLevel: 0, bqStep: 0, sq: {} };
+        let utilityChart, growthChart;
+
+        window.onload = () => {
+            initProCharts(); initLabCharts();
+            nextOQ(); nextEQ(); nextBQ(); nextSQ(); nextTQ();
+            updateRigging(); updatePath(); recalc();
+            window.onscroll = () => {
+                const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+                document.getElementById("progress-bar").style.width = scrolled + "%";
+            };
+        };
+
+        function recalc() {
+            const p = document.getElementById('slip-p').value / 100;
+            const dec = document.getElementById('slip-b').value / 100;
+            const b = dec - 1; 
+            const f = (b * p - (1-p)) / b;
+            document.getElementById('val-p').textContent = (p*100).toFixed(0) + '%';
+            document.getElementById('val-b').textContent = dec.toFixed(2);
+            document.getElementById('calc-result').textContent = Math.max(0, f * 100).toFixed(1) + '%';
+            updateLabCharts(p, b, f);
+        }
+
+        function initLabCharts() {
+            utilityChart = new Chart(document.getElementById('utilityChart').getContext('2d'), { type: 'line', data: { labels: Array.from({length: 101}, (_, i) => (i/100).toFixed(2)), datasets: [{ label: 'Growth', data: [], borderColor: '#a371f7', borderWidth: 2, pointRadius: 0, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: true, title: {display:true, text:'Bet Size (0-100%)', color:'#8b949e'} }, y: { display: false } } } });
+            growthChart = new Chart(document.getElementById('growthChart').getContext('2d'), { type: 'line', data: { labels: Array.from({length: 51}, (_, i) => i), datasets: [{ data: [], borderColor: '#00d4aa', backgroundColor: 'rgba(0, 212, 170, 0.1)', fill: true, pointRadius: 0, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1c2128' } } } } });
+        }
+
+        function updateLabCharts(p, b, f) {
+            if(!utilityChart) return;
+            const uData = []; for(let i=0; i<=100; i++) { const frac = i/100; uData.push((frac === 1) ? -10 : p * Math.log(1 + frac * b) + (1-p) * Math.log(1 - frac)); }
+            utilityChart.data.datasets[0].data = uData; utilityChart.update('none');
+            let bank = 1000; const gData = [1000]; const cappedF = Math.max(0, Math.min(f, 0.9));
+            for(let i=0; i<50; i++) { if(Math.random() < p) bank += bank * cappedF * b; else bank -= bank * cappedF; gData.push(bank); }
+            growthChart.data.datasets[0].data = gData; growthChart.update('none');
+        }
+
+        function initProCharts() {
+            sim.equityChart = new Chart(document.getElementById('equityChart').getContext('2d'), { type: 'line', data: { labels: [0], datasets: [{ data: [10000], borderColor: '#3fb950', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1c2128' }, ticks: { color: '#6e7681', font: { size: 9 } } } } } });
+            sim.volChart = new Chart(document.getElementById('volChart').getContext('2d'), { type: 'line', data: { labels: [0], datasets: [{ data: [0], borderColor: '#d29922', borderWidth: 1, pointRadius: 0, fill: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1c2128' }, ticks: { color: '#6e7681', font: { size: 9 } } } } } });
+        }
+
+        function flipOnce() {
+            const coin = document.getElementById('sim-coin');
+            coin.style.transform = 'rotateY(' + (Math.random() * 2000 + 1000) + 'deg)';
+            
+            setTimeout(() => {
+                const winProb = sim.side === 'heads' ? sim.rigging : (1 - sim.rigging);
+                const isWin = Math.random() < winProb;
+                
+                // Update generic coin text
+                coin.textContent = isWin ? (sim.side === 'heads' ? 'H' : 'T') : (sim.side === 'heads' ? 'T' : 'H');
+                coin.style.background = isWin ? 'linear-gradient(135deg, #2ea043 0%, #238636 100%)' : 'linear-gradient(135deg, #f85149 0%, #da3633 100%)';
+                coin.style.borderColor = isWin ? '#3fb950' : '#f85149';
+                
+                const strat = document.getElementById('sim-strategy').value;
+                const kelly = (sim.rigging - (1 - sim.rigging));
+                let useFrac = sim.fraction;
+                if (strat === 'kelly') useFrac = Math.max(0, kelly);
+                if (strat === 'half') useFrac = Math.max(0, kelly / 2);
+                const bet = sim.balance * useFrac;
+                if (Math.random() < winProb) sim.balance += bet; else sim.balance -= bet;
+                sim.trades++; sim.history.push(sim.balance);
+                if (sim.history.length > 20) {
+                    const slice = sim.history.slice(-20);
+                    const mean = slice.reduce((a, b) => a + b) / 20;
+                    const variance = slice.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / 20;
+                    sim.vols.push(Math.sqrt(variance) / sim.balance * 100);
+                } else sim.vols.push(0);
+                updateSimUI();
+            }, 300);
+        }
+
+        function updateSimUI() {
+            document.getElementById('sim-balance').textContent = '$' + sim.balance.toLocaleString(undefined, {minimumFractionDigits:2});
+            document.getElementById('trade-count').textContent = sim.trades;
+            document.getElementById('stake-pct').textContent = (sim.fraction * 100).toFixed(1) + '%';
+            const logG = (sim.rigging * Math.log(1 + sim.fraction) + (1-sim.rigging) * Math.log(1 - sim.fraction)) * 100;
+            document.getElementById('log-growth').textContent = (logG >= 0 ? '+' : '') + logG.toFixed(2) + '%';
+            sim.equityChart.data.labels.push(sim.trades); sim.equityChart.data.datasets[0].data.push(sim.balance); sim.equityChart.update('none');
+            sim.volChart.data.labels.push(sim.trades); sim.volChart.data.datasets[0].data.push(sim.vols[sim.vols.length-1]); sim.volChart.update('none');
+            updateSimInputs();
+        }
+
+        function updateRigging() { sim.rigging = document.getElementById('rigging-slider').value / 100; document.getElementById('rig-val').textContent = (sim.rigging * 100).toFixed(1) + '%'; const k = (sim.rigging - (1 - sim.rigging)) * 100; document.getElementById('target-kelly').textContent = Math.max(0, k).toFixed(1) + '%'; document.getElementById('kelly-output').textContent = Math.max(0, k).toFixed(1) + '%'; updatePath(); }
+        function updateSimInputs() { sim.fraction = document.getElementById('sim-fraction').value / 100; document.getElementById('frac-input-val').textContent = (sim.fraction * 100).toFixed(1); document.getElementById('sim-bet-amount').textContent = (sim.balance * sim.fraction).toLocaleString(undefined, {minimumFractionDigits:2}); }
+        function setSide(side) { sim.side = side; document.getElementById('btn-heads').classList.toggle('active', side === 'heads'); document.getElementById('btn-tails').classList.toggle('active', side === 'tails'); }
+        function toggleAuto() { const btn = document.getElementById('btn-auto'); if (sim.autoInterval) { clearInterval(sim.autoInterval); sim.autoInterval = null; btn.textContent = "▶ Play"; } else { sim.autoInterval = setInterval(flipOnce, 250); btn.textContent = "⏹ Stop"; } }
+        function updatePath() { const target = document.getElementById('target-bank-slider').value; document.getElementById('target-bank-val').textContent = '$' + parseInt(target).toLocaleString(); const f = (sim.rigging - (1 - sim.rigging)); if (f <= 0) { document.getElementById('path-result').textContent = "Infinite (No Edge)"; return; } const G = Math.pow(1 + f, sim.rigging) * Math.pow(1 - f, 1 - sim.rigging); const flips = Math.log(target / 10000) / Math.log(G); document.getElementById('path-result').textContent = `Estimated Trades: ${Math.ceil(flips)}`; document.getElementById('path-fill').style.width = Math.min(100, (10000/target)*100) + '%'; }
+
+        // --- Games ---
+        const oqLib = [{t:"Triple your money", a:3.00, d:"Profit 2 + Bet 1 = 3.00."}, {t:"Even money", a:2.00, d:"Profit 1 + Bet 1 = 2.00."}, {t:"Risk 10 gain 5 profit", a:1.50, d:"Profit 0.5 + Bet 1 = 1.50."}, {t:"10 to 1 payout", a:11.00, d:"Profit 10 + Bet 1 = 11.00."}];
+        function nextOQ() { document.getElementById('oq-feedback').className = 'feedback'; const lvl = levels[gameState.oqLevel]; document.getElementById('oq-level').textContent = `Level ${gameState.oqLevel+1}: ${lvl.name}`; const item = oqLib[Math.floor(Math.random()*oqLib.length)]; gameState.currentOQ = item; document.getElementById('oq-text').textContent = `"${item.t}"`; document.getElementById('oq-answers').innerHTML = shuffle([item.a.toFixed(2), (item.a+1).toFixed(2), "1.50", "4.00"]).map(o => `<button class="btn-outline" onclick="checkOQ('${o}')">${o}</button>`).join(''); }
+        function checkOQ(p) { const fb = document.getElementById('oq-feedback'); fb.classList.add('visible'); const correct = parseFloat(p) === gameState.currentOQ.a; fb.className = 'feedback visible ' + (correct ? 'correct' : 'wrong'); fb.innerHTML = `<strong>${correct ? '✓ Correct!' : '✗ Incorrect'}</strong><p>${gameState.currentOQ.d}</p><button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="nextOQ()">Next Challenge</button>`; if(correct && gameState.oqLevel < 3) { gameState.oqStep++; if(gameState.oqStep>=3){ gameState.oqLevel++; gameState.oqStep=0; } } }
+        
+        function nextEQ() {
+            document.getElementById('eq-feedback').className = 'feedback'; const lvl = levels[gameState.eqLevel]; document.getElementById('eq-level').textContent = `Level ${gameState.eqLevel+1}: ${lvl.name}`;
+            let p, dec; if(lvl.name === "Coins") { p = 0.55 + Math.random()*0.1; dec = 2.0; } else { p = lvl.pBase + 0.05; dec = lvl.bBase; }
+            const b = dec - 1; const edge = (p * dec) - 1; gameState.currentEQ = {p, dec, b, edge: (edge*100).toFixed(1)};
+            document.getElementById('eq-scenario').innerHTML = `Win Prob: <strong>${(p*100).toFixed(1)}%</strong> | Decimal Odds: <strong>${dec.toFixed(2)}</strong>`;
+            document.getElementById('eq-answers').innerHTML = shuffle([gameState.currentEQ.edge + '%', "5.0%", "15.0%", "0.0%"]).map(o => `<button class="btn-outline" onclick="checkEQ('${o}')">${o}</button>`).join('');
+        }
+        function checkEQ(p) {
+            const fb = document.getElementById('eq-feedback'); fb.classList.add('visible'); const correct = p === gameState.currentEQ.edge + '%'; fb.className = 'feedback visible ' + (correct ? 'correct' : 'wrong');
+            fb.innerHTML = `<strong>${correct ? '✓ Correct!' : '✗ Incorrect'}</strong><div class="visual-steps"><div class="step-card"><strong>Approaches to Edge:</strong><br>1. (Win% * Decimal) - 1 = (${gameState.currentEQ.p.toFixed(2)} * ${gameState.currentEQ.dec}) - 1 = ${gameState.currentEQ.edge}%<br>2. (Win% * b) - Loss% = (${gameState.currentEQ.p.toFixed(2)} * ${gameState.currentEQ.b}) - ${(1-gameState.currentEQ.p).toFixed(2)} = ${gameState.currentEQ.edge}%</div></div><button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="nextEQ()">Next Challenge</button>`;
+            if(correct && gameState.eqLevel < 3) { gameState.eqStep++; if(gameState.eqStep>=3){ gameState.eqLevel++; gameState.eqStep=0; } }
+        }
+
+        function nextBQ() {
+            document.getElementById('bq-feedback').className = 'feedback'; const lvl = levels[gameState.bqLevel]; document.getElementById('bq-level').textContent = `Level ${gameState.bqLevel+1}: ${lvl.name}`;
+            let p, dec; if(lvl.name === "Coins") { p = 60; dec = 2.0; } else { p = Math.floor(lvl.pBase*100)+10; dec = lvl.bBase; }
+            gameState.currentBQ = {p, dec, b: dec-1}; document.getElementById('bq-p').textContent = p + '% Win Prob'; document.getElementById('bq-b').textContent = dec.toFixed(2) + ' Odds';
+        }
+        function checkBQ() {
+            const guess = parseInt(document.getElementById('guess-slip').value); const edge = (gameState.currentBQ.p/100 * gameState.currentBQ.dec) - 1; const actualF = (edge / gameState.currentBQ.b) * 100;
+            const fb = document.getElementById('bq-feedback'); fb.classList.add('visible'); const diff = Math.abs(guess - actualF); const correct = diff < 5; fb.className = 'feedback visible ' + (correct ? 'correct' : 'wrong');
+            fb.innerHTML = `<h3>${correct ? '🎯 Spot On!' : '❄️ Off Target'}</h3><div class="visual-steps"><div class="step-card"><strong>Step-by-step:</strong><br>1. Edge: (${gameState.currentBQ.p}% * ${gameState.currentBQ.dec}) - 1 = ${(edge*100).toFixed(1)}%<br>2. Kelly: ${(edge*100).toFixed(1)}% / ${gameState.currentBQ.b} = <strong>${Math.max(0, actualF).toFixed(1)}%</strong></div><div class="step-card"><strong>Mental Shortcut:</strong> For 2.0 odds, Kelly is just Win% - Loss%.</div></div><button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="nextBQ()">Next Challenge</button>`;
+            if(correct && gameState.bqLevel < 3) { gameState.bqStep++; if(gameState.bqStep>=2){ gameState.bqLevel++; gameState.bqStep=0; } }
+        }
+
+        function nextSQ() {
+            document.getElementById('sq-feedback').className = 'feedback'; const winP = 0.6; const gain = 10; const loss = 5; const edge = (winP * gain/100) - (0.4 * loss/100); const k = (edge / (loss/100)) * 100;
+            gameState.sq = { winP, gain, loss, edge: (edge*100).toFixed(1), k: k.toFixed(0) };
+            document.getElementById('sq-scenario').innerHTML = `Win: 60% | Avg Gain: 10% | Stop Loss: 5%`;
+            document.getElementById('sq-answers').innerHTML = shuffle(['80%', '40%', '20%', '100%']).map(o => `<button class="btn-outline" onclick="checkSQ('${o}')">${o}</button>`).join('');
+        }
+        function checkSQ(p) {
+            const fb = document.getElementById('sq-feedback'); fb.classList.add('visible'); const correct = p === '80%'; fb.className = 'feedback visible ' + (correct ? 'correct' : 'wrong');
+            fb.innerHTML = `<strong>${correct ? '✓ Correct!' : '✗ Incorrect'}</strong><div class="visual-steps"><div class="step-card">1. Edge: (0.6*10%) - (0.4*5%) = 6% - 2% = 4%<br>2. Position: 4% Edge / 5% Stop Loss = <strong>80% of Portfolio</strong></div></div><button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="nextSQ()">Next Challenge</button>`;
+        }
+
+        // --- TRIPLE SWITCH GAME ---
+        const tqLib = [
+            {v: "2:1", formats: ["33%", "3.00"]},
+            {v: "3:1", formats: ["25%", "4.00"]},
+            {v: "4:1", formats: ["20%", "5.00"]},
+            {v: "1:1", formats: ["50%", "2.00"]},
+            {v: "9:1", formats: ["10%", "10.00"]},
+            {v: "25%", formats: ["3:1", "4.00"]},
+            {v: "33%", formats: ["2:1", "3.00"]},
+            {v: "5.00", formats: ["4:1", "20%"]}
+        ];
+        function nextTQ() {
+            document.getElementById('tq-feedback').className = 'feedback';
+            const item = tqLib[Math.floor(Math.random()*tqLib.length)];
+            const target = item.formats[Math.floor(Math.random()*2)];
+            gameState.currentTQ = { question: item.v, answer: target };
+            
+            document.getElementById('tq-label').textContent = `CONVERT ${item.v}`;
+            document.getElementById('tq-text').textContent = "?";
+            
+            const options = shuffle([target, "5:1", "15%", "6.00", "50%"].filter(o => o !== item.v)).slice(0, 4);
+            if (!options.includes(target)) options[0] = target;
+            
+            document.getElementById('tq-answers').innerHTML = shuffle(options).map(o => `<button class="btn btn-outline" onclick="checkTQ('${o}')">${o}</button>`).join('');
+        }
+        function checkTQ(p) {
+            const fb = document.getElementById('tq-feedback');
+            fb.classList.add('visible');
+            const isCorrect = p === gameState.currentTQ.answer;
+            fb.className = 'feedback visible ' + (isCorrect ? 'correct' : 'wrong');
+            document.getElementById('tq-text').textContent = gameState.currentTQ.answer;
+            fb.innerHTML = `<strong>${isCorrect ? '✓ Perfect!' : '✗ Incorrect'}</strong><p>${gameState.currentTQ.question} is mathematically equivalent to ${gameState.currentTQ.answer}.</p><button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="nextTQ()">Next Challenge</button>`;
+        }
+
+        function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+        window.onkeydown = (e) => { if (e.code === 'Space') { e.preventDefault(); flipOnce(); } if (e.code === 'Enter') { e.preventDefault(); toggleAuto(); } }
+    </script>
+</body>
+</html>
