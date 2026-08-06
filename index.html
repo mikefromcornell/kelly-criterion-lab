@@ -79,6 +79,7 @@
 
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 40px; }
 
+        /* Simulator UI */
         .simulator-grid { display: grid; grid-template-columns: 350px 1fr; gap: 24px; }
         @media (max-width: 850px) { .simulator-grid { grid-template-columns: 1fr; } }
 
@@ -86,9 +87,9 @@
         .coin-box { text-align: center; margin-bottom: 24px; }
         
         .coin-disc {
-            width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 16px;
+            width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 16px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 48px; font-weight: 800; color: #fff;
+            font-size: 42px; font-weight: 800; color: #fff;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
             box-shadow: 0 0 20px rgba(0,0,0,0.2);
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s;
@@ -110,6 +111,7 @@
 
         .chart-label { font-size: 11px; text-transform: uppercase; color: #6e7681; letter-spacing: 1px; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; }
 
+        /* Formula & Explanations */
         .formula-box { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 12px; text-align: center; font-family: 'JetBrains Mono', monospace; color: var(--primary); font-size: 18px; margin: 20px 0; border: 1px dashed var(--primary); }
         .def-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
         .def-item { background: var(--sidebar); padding: 16px; border-radius: 8px; border: 1px solid var(--border); }
@@ -133,12 +135,17 @@
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 8px; cursor: pointer; font-family:'JetBrains Mono'; font-size: 13px; }
         .btn-outline:hover { border-color: var(--primary); }
 
-        #game-over { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:4000; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; }
+        #game-over { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:4000; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; }
         #progress-bar { position: fixed; top: 0; left: 0; height: 4px; background: var(--primary); z-index: 3000; width: 0%; }
         section { padding-top: 40px; }
 
         .example-box { background: rgba(163, 113, 247, 0.1); border-left: 4px solid var(--accent); padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0; }
         .example-title { font-weight: bold; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; font-size: 12px; }
+
+        .stats-summary { background: var(--sidebar); border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-family: 'JetBrains Mono', monospace; text-align: left; min-width: 300px; }
+        .stats-summary div { margin-bottom: 8px; display: flex; justify-content: space-between; gap: 20px; }
+        .stats-label { color: var(--text-secondary); }
+        .stats-value { color: var(--primary); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -147,6 +154,7 @@
     <nav class="tabs">
         <a href="https://mikefromcornell.github.io/" class="tab-link hub-link">🚀 Projects</a>
         <a href="#" class="tab-link active" id="tab-btn-play" onclick="switchTab('play', event)">🎮 Kelly's Game</a>
+        <a href="#" class="tab-link" id="tab-btn-estimate" onclick="switchTab('estimate', event)">🎯 Estimation Drill</a>
         <a href="#" class="tab-link" id="tab-btn-cards" onclick="switchTab('cards', event)">🃏 Card Draw</a>
         <a href="#" class="tab-link" id="tab-btn-learn" onclick="switchTab('learn', event)">📚 Learn Theory</a>
     </nav>
@@ -157,7 +165,7 @@
             <p id="page-subtitle" style="color: var(--text-secondary); margin-top: 10px;">No gamble, no future</p>
         </header>
 
-        <!-- PLAY TAB -->
+        <!-- PLAY TAB: Coin Flip -->
         <div id="tab-play" class="main-tab">
             <div class="simulator-grid">
                 <div class="sim-panel">
@@ -226,9 +234,56 @@
             </div>
 
             <div id="game-over">
-                <h1 style="color:var(--danger); font-size:64px; margin-bottom:20px;">BANKRUPT</h1>
-                <p style="color:var(--text-secondary); margin-bottom:30px; max-width:500px;">You've experienced <strong>Gambler's Ruin</strong>. Even with a 60% win chance, aggressive bet sizing eventually leads to zero if variance hits.</p>
+                <h1 style="color:var(--danger); font-size:64px; margin-bottom:10px;">BANKRUPT</h1>
+                <div class="stats-summary">
+                    <div><span class="stats-label">Trades Survived:</span> <span class="stats-value" id="final-trades">0</span></div>
+                    <div><span class="stats-label">Best Balance:</span> <span class="stats-value" id="final-best">0</span></div>
+                    <div><span class="stats-label">Avg Bet Size:</span> <span class="stats-value" id="final-avg-bet">0%</span></div>
+                </div>
+                <div id="bankrupt-feedback" style="color:var(--text-secondary); margin-bottom:30px; max-width:500px; font-size: 14px;">
+                    <!-- Feedback here -->
+                </div>
                 <button class="btn btn-action" style="width:200px" onclick="resetGame()">Try Again</button>
+            </div>
+        </div>
+
+        <!-- ESTIMATION DRILL TAB -->
+        <div id="tab-estimate" class="main-tab" style="display:none;">
+            <div class="card">
+                <h2 style="color:var(--primary); margin-bottom:10px;">Kelly Estimation Challenge</h2>
+                <p class="desc">Calculate the optimal Kelly fraction in your head. Aim for &plusmn;5% accuracy.</p>
+                
+                <div class="game-scenario">
+                    <div class="level-badge" id="est-level-display">Level 1: Coins</div>
+                    <div id="est-scenario-text" style="font-size: 24px; font-weight: bold; margin: 15px 0;">60% Win Prob</div>
+                    <div class="odds-bubble" id="est-odds-display">2.00 Odds</div>
+                </div>
+
+                <div style="margin: 30px 0; text-align: center;">
+                    <label>Your Estimate: <span id="est-guess-val" style="color:var(--primary); font-weight:bold; font-size: 28px;">10%</span></label>
+                    <input type="range" id="est-guess-slip" min="0" max="100" value="10" oninput="document.getElementById('est-guess-val').textContent = this.value + '%'">
+                </div>
+
+                <button class="btn-action" onclick="checkEstimation()">Check My Math</button>
+
+                <div id="est-feedback" class="feedback">
+                    <h3 id="est-feedback-title" style="margin-bottom: 20px; font-size: 24px;"></h3>
+                    
+                    <div class="visual-steps">
+                        <div class="step-card">
+                            <strong style="color:var(--accent)">The Official Formula</strong><br>
+                            f = (bp - q) / b<br>
+                            <span id="est-formula-breakdown" style="font-size: 13px; color:var(--text-secondary)"></span>
+                        </div>
+                        <div class="step-card">
+                            <strong style="color:var(--warning)">The Pro Shortcut</strong><br>
+                            Kelly = Edge / Payout<br>
+                            <span id="est-shortcut-breakdown" style="font-size: 13px; color:var(--text-secondary)"></span>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-outline" style="margin-top: 20px; width: 100%;" onclick="nextEstimation()">Next Scenario</button>
+                </div>
             </div>
         </div>
 
@@ -318,18 +373,14 @@
                 </div>
             </section>
 
-            <section id="conversion-mastery">
-                <h2>Triple Conversion Mastery</h2>
+            <section id="edge-intro">
+                <h2>Edge Mastery</h2>
                 <div class="card">
+                    <div class="formula-box">Edge = (Win% * Decimal Odds) - 1</div>
                     <div class="example-box">
-                        <div class="example-title">Quick Table</div>
-                        <table style="width:100%; font-family: 'JetBrains Mono'; font-size:12px; text-align:center;">
-                            <tr><th>Win%</th><th>Ratio</th><th>Decimal</th></tr>
-                            <tr><td>50%</td><td>1:1</td><td>2.00</td></tr>
-                            <tr><td>33%</td><td>2:1</td><td>3.00</td></tr>
-                            <tr><td>25%</td><td>3:1</td><td>4.00</td></tr>
-                            <tr><td>20%</td><td>4:1</td><td>5.00</td></tr>
-                        </table>
+                        <div class="example-title">Example: Tech Trade Positioning</div>
+                        <p>Win 60% for +10% gain. Lose 40% for -5% loss.</p>
+                        <p>Edge = (0.6 * 10%) - (0.4 * 5%) = <strong>4% Edge</strong></p>
                     </div>
                 </div>
             </section>
@@ -358,7 +409,7 @@
         const sim = { 
             balance: 10000, startBalance: 10000, rigging: 0.6, side: 'heads', fraction: 0.2, 
             history: [10000], flipsHistory: [], trades: 0, autoInterval: null, 
-            equityChart: null, distChart: null 
+            equityChart: null, distChart: null, bestBalance: 10000, totalFractionUsed: 0
         };
 
         const cardGame = {
@@ -367,10 +418,14 @@
             totalKellyDiff: 0, chart: null
         };
 
+        let estState = { level: 0, p: 0, b: 0, odds: 0 };
+        const levels = [{name:"Coins", pBase:0.6, bBase:2.0}, {name:"Dice", pBase:0.25, bBase:6.0}, {name:"Cards", pBase:0.1, bBase:15.0}];
+
         window.onload = () => {
             initCharts();
             updateRigging();
             updateCardInputs();
+            nextEstimation();
             switchTab('play');
         };
 
@@ -379,9 +434,8 @@
             document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
             document.getElementById('tab-btn-' + tab).classList.add('active');
 
-            document.getElementById('tab-play').style.display = tab === 'play' ? 'block' : 'none';
-            document.getElementById('tab-cards').style.display = tab === 'cards' ? 'block' : 'none';
-            document.getElementById('tab-learn').style.display = tab === 'learn' ? 'block' : 'none';
+            document.querySelectorAll('.main-tab').forEach(t => t.style.display = 'none');
+            document.getElementById('tab-' + tab).style.display = 'block';
 
             if(tab === 'learn') initLabCharts();
         }
@@ -415,6 +469,8 @@
                 
                 sim.trades++;
                 sim.history.push(sim.balance);
+                sim.totalFractionUsed += f;
+                if(sim.balance > sim.bestBalance) sim.bestBalance = sim.balance;
 
                 const feedback = document.getElementById('game-feedback-msg');
                 const diff = sim.balance - oldBal;
@@ -428,10 +484,29 @@
 
                 if(sim.balance <= 1) {
                     sim.balance = 0;
-                    document.getElementById('game-over').style.display = 'flex';
+                    showGameOver();
                 }
                 updateSimUI();
             }, 300);
+        }
+
+        function showGameOver() {
+            document.getElementById('game-over').style.display = 'flex';
+            document.getElementById('final-trades').textContent = sim.trades;
+            document.getElementById('final-best').textContent = '$' + Math.round(sim.bestBalance).toLocaleString();
+            const avgBet = ((sim.totalFractionUsed / sim.trades) * 100).toFixed(1);
+            document.getElementById('final-avg-bet').textContent = avgBet + '%';
+
+            const kellyPoint = (sim.rigging - (1 - sim.rigging)) * 100;
+            let feedback = "";
+            if(parseFloat(avgBet) > kellyPoint * 1.5) {
+                feedback = "You were <strong>over-leveraged</strong>. By betting significantly more than the Kelly point, you traded growth for extreme volatility, making bankruptcy inevitable.";
+            } else if(parseFloat(avgBet) > kellyPoint) {
+                feedback = "You were betting in the <strong>danger zone</strong>. Any bet larger than the Kelly Criterion increases risk while actually <em>decreasing</em> expected long-term growth.";
+            } else {
+                feedback = "Even with good sizing, bad luck happens. However, usually people go bust here because they didn't reduce their bet size as their bankroll shrank.";
+            }
+            document.getElementById('bankrupt-feedback').innerHTML = feedback;
         }
 
         function updateSimUI() {
@@ -449,10 +524,57 @@
 
         function resetGame() {
             sim.balance = 10000; sim.trades = 0; sim.history = [10000]; sim.flipsHistory = [];
+            sim.bestBalance = 10000; sim.totalFractionUsed = 0;
             document.getElementById('game-over').style.display = 'none';
             sim.equityChart.data.labels = [0]; sim.equityChart.data.datasets[0].data = [10000];
             document.getElementById('game-feedback-msg').textContent = 'Bankroll Reset. Ready to flip?';
             updateSimUI();
+        }
+
+        // --- Estimation Drill Logic ---
+        function nextEstimation() {
+            document.getElementById('est-feedback').className = 'feedback';
+            const lvl = levels[estState.level];
+            document.getElementById('est-level-display').textContent = `Level ${estState.level + 1}: ${lvl.name}`;
+            
+            if(lvl.name === "Coins") {
+                estState.p = (Math.floor(Math.random() * 25) + 55) / 100; // 55-80%
+                estState.odds = 2.0;
+            } else if(lvl.name === "Dice") {
+                estState.p = (Math.floor(Math.random() * 10) + 20) / 100; // 20-30%
+                estState.odds = 6.0;
+            } else {
+                estState.p = (Math.floor(Math.random() * 10) + 10) / 100; // 10-20%
+                estState.odds = 13.0;
+            }
+            estState.b = estState.odds - 1;
+            
+            document.getElementById('est-scenario-text').textContent = `${(estState.p * 100).toFixed(0)}% Win Prob`;
+            document.getElementById('est-odds-display').textContent = `${estState.odds.toFixed(2)} Odds`;
+        }
+
+        function checkEstimation() {
+            const guess = parseInt(document.getElementById('est-guess-slip').value);
+            const p = estState.p;
+            const b = estState.b;
+            const q = 1 - p;
+            const edge = (p * estState.odds) - 1;
+            const actualF = (edge / b) * 100;
+            
+            const fb = document.getElementById('est-feedback');
+            const title = document.getElementById('est-feedback-title');
+            fb.classList.add('visible');
+            const diff = Math.abs(guess - actualF);
+            fb.className = `feedback visible ${diff < 5 ? 'correct' : 'wrong'}`;
+            title.textContent = diff < 5 ? "🎯 Spot On!" : "❄️ Off Target";
+
+            document.getElementById('est-formula-breakdown').innerHTML = 
+                `f = (b*p - q) / b <br>` +
+                `f = (${b} * ${p.toFixed(2)} - ${q.toFixed(2)}) / ${b} = <strong>${Math.max(0, actualF).toFixed(1)}%</strong>`;
+
+            document.getElementById('est-shortcut-breakdown').innerHTML = 
+                `1. Edge: (${(p*100).toFixed(0)}% * ${estState.odds}) - 100% = <strong>${(edge*100).toFixed(1)}%</strong><br>` +
+                `2. Kelly: ${(edge*100).toFixed(1)}% / ${b} = <strong>${Math.max(0, actualF).toFixed(1)}%</strong>`;
         }
 
         // --- Card Game Logic ---
@@ -522,13 +644,12 @@
         function toggleAuto() { if(sim.autoInterval) { clearInterval(sim.autoInterval); sim.autoInterval = null; document.getElementById('btn-auto').textContent = "▶ Auto-Play"; } else { sim.autoInterval = setInterval(flipOnce, 250); document.getElementById('btn-auto').textContent = "⏹ Stop"; } }
         
         let labUtility;
-        function initLabCharts() { if(labUtility) return; labUtility = new Chart(document.getElementById('labUtilityChart').getContext('2d'), { type: 'line', data: { labels: Array.from({length:101}, (_,i) => i/100), datasets: [{ data: [], borderColor: '#a371f7', borderWidth: 2, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { display: false } }, y: { display: false } } } }); recalcLab(); }
+        function initLabCharts() { if(labUtility) return; labUtility = new Chart(document.getElementById('labUtilityChart').getContext('2d'), { type: 'line', data: { labels: Array.from({length:101}, (_,i) => i/100), datasets: [{ data: [], borderColor: '#a371f7', borderWidth: 2, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { title:{display:true, text:'Bet Size (0-100%)', color:'#8b949e'}, ticks: { display: false } }, y: { display: false } } } }); recalcLab(); }
         function recalcLab() { const p = document.getElementById('lab-p').value / 100; const b = (document.getElementById('lab-b').value / 100) - 1; const f = (b * p - (1-p)) / b; document.getElementById('lab-p-val').textContent = (p*100).toFixed(0) + '%'; document.getElementById('lab-b-val').textContent = (b+1).toFixed(2); document.getElementById('lab-result').textContent = Math.max(0, f*100).toFixed(1) + '%'; if(labUtility) { const data = []; for(let i=0; i<=100; i++) { const frac = i/100; data.push(frac === 1 ? -10 : p * Math.log(1 + frac * b) + (1-p) * Math.log(1 - frac)); } labUtility.data.datasets[0].data = data; labUtility.update('none'); } }
         function updatePath() { const target = document.getElementById('target-bank-slider').value; document.getElementById('target-bank-val').textContent = '$' + parseInt(target).toLocaleString(); const f = (sim.rigging - (1 - sim.rigging)); if (f <= 0) { document.getElementById('path-result').textContent = "Infinite (No Edge)"; return; } const G = Math.pow(1 + f, sim.rigging) * Math.pow(1 - f, 1 - sim.rigging); const flips = Math.log(target / 10000) / Math.log(G); document.getElementById('path-result').textContent = `Estimated Trades: ${Math.ceil(flips)}`; document.getElementById('path-fill').style.width = Math.min(100, (10000/target)*100) + '%'; }
         
         window.onkeydown = (e) => { if(e.code === 'Space') { e.preventDefault(); flipOnce(); } if(e.code === 'Enter') { e.preventDefault(); toggleAuto(); } }
         function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
-        function nextOQ() {} function nextEQ() {} // Games from prev tabs handled differently now
     </script>
 </body>
 </html>
