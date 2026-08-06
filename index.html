@@ -145,19 +145,20 @@
     <div id="progress-bar"></div>
 
     <nav class="tabs">
-        <a href="https://mikefromcornell.github.io/" class="tab-link hub-link">🚀 All Projects</a>
-        <a href="#" class="tab-link active" id="tab-btn-play" onclick="switchTab('play', event)">🎮 Play Kelly's Game</a>
+        <a href="https://mikefromcornell.github.io/" class="tab-link hub-link">🚀 Projects</a>
+        <a href="#" class="tab-link active" id="tab-btn-play" onclick="switchTab('play', event)">🎮 Kelly's Game</a>
+        <a href="#" class="tab-link" id="tab-btn-cards" onclick="switchTab('cards', event)">🃏 Card Draw</a>
         <a href="#" class="tab-link" id="tab-btn-learn" onclick="switchTab('learn', event)">📚 Learn Theory</a>
     </nav>
 
     <div class="container">
         <header>
-            <h1 id="main-title">KELLY'S GAME</h1>
-            <p style="color: var(--text-secondary); margin-top: 10px;">The Professional Interface for Capital Allocation</p>
+            <h1 id="page-title">KELLY'S GAME</h1>
+            <p id="page-subtitle" style="color: var(--text-secondary); margin-top: 10px;">No gamble, no future</p>
         </header>
 
         <!-- PLAY TAB -->
-        <div id="tab-play">
+        <div id="tab-play" class="main-tab">
             <div class="simulator-grid">
                 <div class="sim-panel">
                     <div class="coin-box">
@@ -177,10 +178,10 @@
                         <button class="btn-tab" id="btn-tails" onclick="setSide('tails')">TAILS</button>
                     </div>
 
-                    <button class="btn-action" id="flip-btn" onclick="flipOnce()" style="background:#3fb950; color:#0d1117">🟡 Flip Once</button>
+                    <button class="btn-action" id="flip-btn" onclick="flipOnce()">🟡 Flip Once</button>
                     
                     <div style="font-size: 11px; color: #3fb950; text-align: center; margin-bottom: 16px; font-family:'JetBrains Mono';">
-                        Log Growth: <span id="log-growth">+0.00%</span> • Stake: <span id="stake-pct">0.0%</span>
+                        Expected Growth: <span id="log-growth">+0.00%</span> • Stake: <span id="stake-pct">0.0%</span>
                     </div>
 
                     <div style="background:#161b22; padding:16px; border-radius:8px; border:1px solid #30363d;">
@@ -192,7 +193,7 @@
                     </div>
 
                     <div style="display:flex; gap:10px; margin-top:16px;">
-                        <button class="btn-action" id="btn-auto" onclick="toggleAuto()" style="flex:2; margin:0;">▶ Play</button>
+                        <button class="btn-action" id="btn-auto" onclick="toggleAuto()" style="flex:2; margin:0;">▶ Auto-Play</button>
                         <select id="sim-strategy" style="flex:1.5;" onchange="updateSimInputs()">
                             <option value="fixed">Fixed fraction (%)</option>
                             <option value="kelly">Full Kelly (Optimal)</option>
@@ -200,7 +201,7 @@
                         </select>
                     </div>
 
-                    <button class="btn-outline" style="margin-top: 15px; width: 100%; font-size: 12px; border-color: var(--border); color: var(--text-secondary);" onclick="resetGame()">🔄 Reset Game</button>
+                    <button class="btn-outline" style="margin-top: 15px; width: 100%; font-size: 12px; border-color: var(--border); color: var(--text-secondary);" onclick="resetGame()">🔄 Reset Bankroll</button>
 
                     <div style="margin-top:20px; font-family:'JetBrains Mono'; font-size:11px; color:#6e7681;">
                         <div><span style="color:#8b949e">Space</span> flip the coin</div>
@@ -209,7 +210,7 @@
                 </div>
 
                 <div class="sim-panel">
-                    <div class="chart-label">Wealth Path • <span id="trade-count">0</span> trades</div>
+                    <div class="chart-label">Bankroll Path • <span id="trade-count">0</span> trades</div>
                     <div style="height: 180px; margin-bottom: 24px;"><canvas id="equityChart"></canvas></div>
                     
                     <div class="chart-label">Actual Frequency (Last 1000 Flips)</div>
@@ -231,9 +232,53 @@
             </div>
         </div>
 
+        <!-- CARD DRAW TAB -->
+        <div id="tab-cards" class="main-tab" style="display:none;">
+            <div class="simulator-grid">
+                <div class="sim-panel">
+                    <div class="coin-box">
+                        <div class="coin-rigging">Pick a card! <span id="card-prob-display" style="color:#58a6ff">7.7%</span> win chance.</div>
+                        <div id="card-visual" class="coin-disc coin-tails" style="border-radius: 8px; width: 100px; height: 140px; font-size: 32px;">?</div>
+                    </div>
+
+                    <div id="card-game-feedback" style="min-height: 80px; text-align: center; margin-bottom: 15px; font-size: 13px; color: var(--text-secondary); background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+                        Set your odds and bet size. Can you find the Kelly point for a 4/52 draw?
+                    </div>
+
+                    <div class="sim-stat-row"><span>BALANCE</span><span class="sim-val-large" id="card-balance">$10,000.00</span></div>
+                    
+                    <div class="input-group">
+                        <label>Decimal Odds: <span id="card-odds-val" style="color:var(--accent)">15.00</span></label>
+                        <input type="range" id="card-odds-slider" min="200" max="5000" value="1500" oninput="updateCardInputs()">
+                    </div>
+
+                    <div style="background:#161b22; padding:16px; border-radius:8px; border:1px solid #30363d; margin-bottom: 16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label style="font-size: 11px; color: #8b949e; margin:0;">BET % OF BANKROLL</label>
+                            <div style="background:#0d1117; border:1px solid #30363d; padding:2px 8px; border-radius:4px; font-size:12px; color:#c9d1d9;"><span id="card-frac-val">1.0</span>%</div>
+                        </div>
+                        <input type="range" id="card-fraction-slider" min="0" max="100" value="1" oninput="updateCardInputs()">
+                    </div>
+
+                    <button class="btn-action" onclick="drawCard()" style="background:var(--accent); color:#000;">🃏 Draw Card</button>
+                    <button class="btn-outline" style="width: 100%; font-size: 12px; margin-top: 8px;" onclick="endCardGame()">📊 End Session & Feedback</button>
+                </div>
+                
+                <div class="sim-panel">
+                    <div class="chart-label">Session Performance</div>
+                    <div style="height: 180px; margin-bottom: 24px;"><canvas id="cardEquityChart"></canvas></div>
+                    
+                    <div id="card-summary" class="feedback" style="display:block; margin-top:0;">
+                        <h3 style="color:var(--primary); font-size:16px;">Session Insights</h3>
+                        <p id="card-stats-msg" style="font-size:12px; color:var(--text-secondary);">Draw cards to see your performance stats here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- LEARN TAB -->
-        <div id="tab-learn" style="display:none;">
-            <section id="defs">
+        <div id="tab-learn" class="main-tab" style="display:none;">
+            <section id="defs" style="padding-top: 0;">
                 <h2>Technical Foundations</h2>
                 <div class="card">
                     <div class="def-grid">
@@ -273,33 +318,35 @@
                 </div>
             </section>
 
-            <section id="edge-intro">
-                <h2>Edge Mastery</h2>
+            <section id="conversion-mastery">
+                <h2>Triple Conversion Mastery</h2>
                 <div class="card">
-                    <div class="formula-box">Edge = (Win% * Decimal Odds) - 1</div>
                     <div class="example-box">
-                        <div class="example-title">Example: Tech Trade Positioning</div>
-                        <p>Win 60% for +10% gain. Lose 40% for -5% loss.</p>
-                        <p>Edge = (0.6 * 10%) - (0.4 * 5%) = <strong>4% Edge</strong></p>
+                        <div class="example-title">Quick Table</div>
+                        <table style="width:100%; font-family: 'JetBrains Mono'; font-size:12px; text-align:center;">
+                            <tr><th>Win%</th><th>Ratio</th><th>Decimal</th></tr>
+                            <tr><td>50%</td><td>1:1</td><td>2.00</td></tr>
+                            <tr><td>33%</td><td>2:1</td><td>3.00</td></tr>
+                            <tr><td>25%</td><td>3:1</td><td>4.00</td></tr>
+                            <tr><td>20%</td><td>4:1</td><td>5.00</td></tr>
+                        </table>
                     </div>
                 </div>
             </section>
 
-            <section id="games">
-                <h2>Practice Challenges</h2>
+            <section id="calculator">
+                <h2>Laboratory Calculator</h2>
                 <div class="card">
-                    <div class="level-badge" id="oq-level">Level 1: Coins</div>
-                    <h3>Guess the Odds</h3>
-                    <div class="game-scenario"><div id="oq-text" style="font-size:20px; font-weight:bold;">"Triple your money"</div></div>
-                    <div class="answers-grid" id="oq-answers"></div>
-                    <div id="oq-feedback" class="feedback"></div>
-                </div>
-                <div class="card">
-                    <div class="level-badge" id="eq-level">Level 1: Coins</div>
-                    <h3>Estimate the Edge</h3>
-                    <div class="game-scenario"><div id="eq-scenario" style="font-size:18px;">Win: 55%, Odds: 2.00</div></div>
-                    <div class="answers-grid" id="eq-answers"></div>
-                    <div id="eq-feedback" class="feedback"></div>
+                    <div class="input-group">
+                        <label>Win Probability: <span id="lab-p-val">55%</span></label>
+                        <input type="range" id="lab-p" min="1" max="99" value="55" oninput="recalcLab()">
+                    </div>
+                    <div class="input-group">
+                        <label>Decimal Odds: <span id="lab-b-val">2.00</span></label>
+                        <input type="range" id="lab-b" min="101" max="500" value="200" oninput="recalcLab()">
+                    </div>
+                    <div class="formula-box" id="lab-result">10.0%</div>
+                    <div style="height: 200px;"><canvas id="labUtilityChart"></canvas></div>
                 </div>
             </section>
         </div>
@@ -307,46 +354,41 @@
     </div>
 
     <script>
+        // --- Shared State ---
         const sim = { 
-            balance: 10000, rigging: 0.6, side: 'heads', fraction: 0.2, 
-            history: [10000], flipsHistory: [], trades: 0, 
-            autoInterval: null, equityChart: null, distChart: null 
+            balance: 10000, startBalance: 10000, rigging: 0.6, side: 'heads', fraction: 0.2, 
+            history: [10000], flipsHistory: [], trades: 0, autoInterval: null, 
+            equityChart: null, distChart: null 
         };
-        let gameState = { oqLevel: 0, oqStep: 0, eqLevel: 0, eqStep: 0 };
-        const levels = [{name:"Coins"}, {name:"Dice"}, {name:"Cards"}];
+
+        const cardGame = {
+            balance: 10000, history: [10000], trades: 0, 
+            prob: 4/52, odds: 15.0, fraction: 0.01,
+            totalKellyDiff: 0, chart: null
+        };
 
         window.onload = () => {
             initCharts();
             updateRigging();
-            nextOQ(); nextEQ();
+            updateCardInputs();
             switchTab('play');
         };
 
         function switchTab(tab, e) {
             if(e) e.preventDefault();
             document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
-            if(e) e.target.classList.add('active');
-            else document.getElementById('tab-btn-play').classList.add('active');
+            document.getElementById('tab-btn-' + tab).classList.add('active');
 
-            document.getElementById('play-tab').style.display = tab === 'play' ? 'block' : 'none';
-            document.getElementById('learn-tab').style.display = tab === 'learn' ? 'block' : 'none';
+            document.getElementById('tab-play').style.display = tab === 'play' ? 'block' : 'none';
+            document.getElementById('tab-cards').style.display = tab === 'cards' ? 'block' : 'none';
+            document.getElementById('tab-learn').style.display = tab === 'learn' ? 'block' : 'none';
+
+            if(tab === 'learn') initLabCharts();
         }
 
-        function initCharts() {
-            sim.equityChart = new Chart(document.getElementById('equityChart').getContext('2d'), {
-                type: 'line',
-                data: { labels: [0], datasets: [{ data: [10000], borderColor: '#3fb950', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.1 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1c2128' }, ticks: { color: '#6e7681', font: { size: 9 } } } } }
-            });
-            sim.distChart = new Chart(document.getElementById('distChart').getContext('2d'), {
-                type: 'bar',
-                data: { labels: ['H', 'T'], datasets: [{ data: [0, 0], backgroundColor: ['#2ea043', '#f85149'] }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: '#8b949e' }, grid: { display: false } } } }
-            });
-        }
-
+        // --- Coin Flip Game Logic ---
         function flipOnce() {
-            if (sim.balance <= 0.01) return;
+            if (sim.balance <= 0.1) return;
             const coin = document.getElementById('sim-coin');
             coin.style.transform = `rotateY(${Math.random() * 2000 + 1000}deg)`;
             
@@ -361,11 +403,11 @@
                 sim.flipsHistory.push(landed);
                 if(sim.flipsHistory.length > 1000) sim.flipsHistory.shift();
 
-                const strat = document.getElementById('sim-strategy').value;
+                const strategy = document.getElementById('sim-strategy').value;
                 const kellyVal = (sim.rigging - (1 - sim.rigging));
                 let f = sim.fraction;
-                if(strat === 'kelly') f = Math.max(0, kellyVal);
-                if(strat === 'half') f = Math.max(0, kellyVal / 2);
+                if(strategy === 'kelly') f = Math.max(0, kellyVal);
+                if(strategy === 'half') f = Math.max(0, kellyVal / 2);
 
                 const bet = sim.balance * f;
                 const oldBal = sim.balance;
@@ -378,13 +420,13 @@
                 const diff = sim.balance - oldBal;
                 if(isWin) {
                     feedback.style.color = '#3fb950';
-                    feedback.innerHTML = `<strong>WIN! +$${diff.toFixed(2)}</strong><br>Win chance was ${(winProb*100).toFixed(0)}%. Your bet was ${(f*100).toFixed(1)}% of your stack.`;
+                    feedback.innerHTML = `<strong>WIN! +$${diff.toFixed(2)}</strong><br>Win chance was ${(winProb*100).toFixed(0)}%. Stake: ${(f*100).toFixed(1)}%. Wealth is compounding!`;
                 } else {
                     feedback.style.color = '#f85149';
-                    feedback.innerHTML = `<strong>LOSS -$${Math.abs(diff).toFixed(2)}</strong><br>Variance hit. But Kelly sizing ensures that a single loss won't end your run.`;
+                    feedback.innerHTML = `<strong>LOSS -$${Math.abs(diff).toFixed(2)}</strong><br>Variance happened. Kelly sizing means this loss is just a temporary drawdown.`;
                 }
 
-                if(sim.balance <= 0.1) {
+                if(sim.balance <= 1) {
                     sim.balance = 0;
                     document.getElementById('game-over').style.display = 'flex';
                 }
@@ -405,57 +447,88 @@
             updateSimInputs();
         }
 
-        function updateSimInputs() {
-            sim.fraction = document.getElementById('sim-fraction').value / 100;
-            document.getElementById('frac-input-val').textContent = (sim.fraction * 100).toFixed(1);
-            document.getElementById('sim-bet-amount').textContent = (sim.balance * sim.fraction).toLocaleString(undefined, {minimumFractionDigits:2});
-        }
-
-        function updateRigging() {
-            sim.rigging = document.getElementById('rigging-slider').value / 100;
-            document.getElementById('rig-val').textContent = (sim.rigging * 100).toFixed(1) + '%';
-            const k = (sim.rigging - (1 - sim.rigging)) * 100;
-            document.getElementById('target-kelly').textContent = Math.max(0, k).toFixed(1) + '%';
-            document.getElementById('kelly-output').textContent = Math.max(0, k).toFixed(1) + '%';
-        }
-
         function resetGame() {
             sim.balance = 10000; sim.trades = 0; sim.history = [10000]; sim.flipsHistory = [];
             document.getElementById('game-over').style.display = 'none';
             sim.equityChart.data.labels = [0]; sim.equityChart.data.datasets[0].data = [10000];
+            document.getElementById('game-feedback-msg').textContent = 'Bankroll Reset. Ready to flip?';
             updateSimUI();
         }
 
-        function setSide(s) {
-            sim.side = s;
-            document.getElementById('btn-heads').classList.toggle('active', s === 'heads');
-            document.getElementById('btn-tails').classList.toggle('active', s === 'tails');
+        // --- Card Game Logic ---
+        function updateCardInputs() {
+            cardGame.odds = parseFloat(document.getElementById('card-odds-slider').value) / 100;
+            cardGame.fraction = parseFloat(document.getElementById('card-fraction-slider').value) / 100;
+            document.getElementById('card-odds-val').textContent = cardGame.odds.toFixed(2);
+            document.getElementById('card-frac-val').textContent = (cardGame.fraction * 100).toFixed(1);
         }
 
-        function toggleAuto() {
-            if(sim.autoInterval) { clearInterval(sim.autoInterval); sim.autoInterval = null; document.getElementById('btn-auto').textContent = "▶ Auto-Play"; }
-            else { sim.autoInterval = setInterval(flipOnce, 250); document.getElementById('btn-auto').textContent = "⏹ Stop"; }
+        function drawCard() {
+            if(cardGame.balance <= 0.1) return;
+            const isWin = Math.random() < cardGame.prob;
+            const b = cardGame.odds - 1;
+            const kelly = (b * cardGame.prob - (1-cardGame.prob)) / b;
+            
+            const bet = cardGame.balance * cardGame.fraction;
+            const oldBal = cardGame.balance;
+            if(isWin) cardGame.balance += (bet * b); else cardGame.balance -= bet;
+            
+            cardGame.trades++;
+            cardGame.history.push(cardGame.balance);
+            cardGame.totalKellyDiff += Math.abs(cardGame.fraction - Math.max(0, kelly));
+
+            const visual = document.getElementById('card-visual');
+            visual.textContent = isWin ? 'A' : 'X';
+            visual.style.background = isWin ? 'var(--primary)' : 'var(--danger)';
+
+            const feedback = document.getElementById('card-game-feedback');
+            if(isWin) {
+                feedback.innerHTML = `<span style="color:var(--primary)">✓ ACE! +$${(cardGame.balance-oldBal).toFixed(2)}</span><br>Mathematical Kelly for these odds was ${(Math.max(0,kelly)*100).toFixed(1)}%.`;
+            } else {
+                feedback.innerHTML = `<span style="color:var(--danger)">✗ MISS. -$${Math.abs(cardGame.balance-oldBal).toFixed(2)}</span><br>Probability was 4/52 (7.7%).`;
+            }
+
+            document.getElementById('card-balance').textContent = '$' + cardGame.balance.toLocaleString(undefined, {minimumFractionDigits:2});
+            cardGame.chart.data.labels.push(cardGame.trades);
+            cardGame.chart.data.datasets[0].data.push(cardGame.balance);
+            cardGame.chart.update('none');
         }
 
-        const oqLib = [{t:"Triple your money", a:3.00, d:"Stake 1 + Profit 2 = 3.00."}, {t:"Even money", a:2.00, d:"Stake 1 + Profit 1 = 2.00."}, {t:"5 to 1 payout", a:6.00, d:"Stake 1 + Profit 5 = 6.00."}, {t:"Risk $1 gain $1.50 profit", a:2.50, d:"Stake 1 + Profit 1.5 = 2.50."}];
-        function nextOQ() { document.getElementById('oq-feedback').className = 'feedback'; const lvl = levels[gameState.oqLevel]; document.getElementById('oq-level').textContent = `Level ${gameState.oqLevel+1}: ${lvl.name}`; const item = oqLib[Math.floor(Math.random() * oqLib.length)]; gameState.currentOQ = item; document.getElementById('oq-text').textContent = `"${item.t}"`; const options = shuffle([item.a.toFixed(2), (item.a+1).toFixed(2), "1.50", "4.00"]); document.getElementById('oq-answers').innerHTML = options.map(o => `<button class="btn-outline" onclick="checkOQ('${o}')">${o}</button>`).join(''); }
-        function checkOQ(p) { const fb = document.getElementById('oq-feedback'); fb.classList.add('visible'); const correct = parseFloat(p) === gameState.currentOQ.a; fb.className = 'feedback visible ' + (correct ? 'correct' : 'wrong'); fb.innerHTML = `<strong>${correct ? '✓ Correct!' : '✗ Incorrect'}</strong><p>${gameState.currentOQ.d}</p><button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="nextOQ()">Next Challenge</button>`; if (correct && gameState.oqLevel < 2) { gameState.oqStep++; if (gameState.oqStep >= 3) { gameState.oqLevel++; gameState.oqStep = 0; } } }
+        function endCardGame() {
+            const avgDiff = (cardGame.totalKellyDiff / cardGame.trades) * 100;
+            let insight = "";
+            if(avgDiff < 2) insight = "You are a Kelly Master. Your sizing is perfect.";
+            else if(avgDiff < 10) insight = "Good sizing, but keep an eye on the denominator (payout).";
+            else insight = "You are betting inconsistently. Focus on Edge / Odds.";
+
+            document.getElementById('card-stats-msg').innerHTML = `
+                <strong>Trades:</strong> ${cardGame.trades}<br>
+                <strong>Avg. Distance from Kelly:</strong> ${avgDiff.toFixed(1)}%<br>
+                <strong>Outcome:</strong> ${cardGame.balance > 10000 ? 'PROFIT' : 'LOSS'}<br><br>
+                <em>Genie's Insight:</em> ${insight}
+            `;
+        }
+
+        // --- Infrastructure ---
+        function initCharts() {
+            sim.equityChart = new Chart(document.getElementById('equityChart').getContext('2d'), { type: 'line', data: { labels: [0], datasets: [{ data: [10000], borderColor: '#3fb950', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1c2128' }, ticks: { color: '#6e7681', font: { size: 9 } } } } } });
+            sim.distChart = new Chart(document.getElementById('distChart').getContext('2d'), { type: 'bar', data: { labels: ['H', 'T'], datasets: [{ data: [0, 0], backgroundColor: ['#2ea043', '#f85149'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: '#8b949e' }, grid: { display: false } } } } });
+            cardGame.chart = new Chart(document.getElementById('cardEquityChart').getContext('2d'), { type: 'line', data: { labels: [0], datasets: [{ data: [10000], borderColor: '#58a6ff', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1c2128' }, ticks: { color: '#6e7681', font: { size: 9 } } } } } });
+        }
+
+        function updateRigging() { sim.rigging = document.getElementById('rigging-slider').value / 100; document.getElementById('rig-val').textContent = (sim.rigging * 100).toFixed(1) + '%'; const k = (sim.rigging - (1 - sim.rigging)) * 100; document.getElementById('target-kelly').textContent = Math.max(0, k).toFixed(1) + '%'; document.getElementById('kelly-output').textContent = Math.max(0, k).toFixed(1) + '%'; }
+        function updateSimInputs() { sim.fraction = document.getElementById('sim-fraction').value / 100; document.getElementById('frac-input-val').textContent = (sim.fraction * 100).toFixed(1); document.getElementById('sim-bet-amount').textContent = (sim.balance * sim.fraction).toLocaleString(undefined, {minimumFractionDigits:2}); }
+        function setSide(s) { sim.side = s; document.getElementById('btn-heads').classList.toggle('active', s === 'heads'); document.getElementById('btn-tails').classList.toggle('active', s === 'tails'); }
+        function toggleAuto() { if(sim.autoInterval) { clearInterval(sim.autoInterval); sim.autoInterval = null; document.getElementById('btn-auto').textContent = "▶ Auto-Play"; } else { sim.autoInterval = setInterval(flipOnce, 250); document.getElementById('btn-auto').textContent = "⏹ Stop"; } }
         
-        function nextEQ() {
-            document.getElementById('eq-feedback').className = 'feedback'; const lvl = levels[gameState.eqLevel]; document.getElementById('eq-level').textContent = `Level ${gameState.eqLevel+1}: ${lvl.name}`;
-            let p, dec; if(lvl.name === "Coins") { p = 0.55 + Math.random()*0.1; dec = 2.0; } else { p = 0.2; dec = 6.0; }
-            const b = dec - 1; const edge = (p * dec) - 1; gameState.currentEQ = {p, dec, b, edge: (edge*100).toFixed(1)};
-            document.getElementById('eq-scenario').innerHTML = `Win Prob: <strong>${(p*100).toFixed(1)}%</strong> | Decimal Odds: <strong>${dec.toFixed(2)}</strong>`;
-            document.getElementById('eq-answers').innerHTML = shuffle([gameState.currentEQ.edge + '%', "5.0%", "15.0%", "0.0%"]).map(o => `<button class="btn-outline" onclick="checkEQ('${o}')">${o}</button>`).join('');
-        }
-        function checkEQ(p) {
-            const fb = document.getElementById('eq-feedback'); fb.classList.add('visible'); const correct = p === gameState.currentEQ.edge + '%'; fb.className = 'feedback visible ' + (correct ? 'correct' : 'wrong');
-            fb.innerHTML = `<strong>${correct ? '✓ Correct!' : '✗ Incorrect'}</strong><div class="visual-steps"><div class="step-card"><strong>Formula:</strong> Edge = (Win% * Decimal) - 1<br>(${gameState.currentEQ.p.toFixed(2)} * ${gameState.currentEQ.dec.toFixed(2)}) - 1 = <strong>${gameState.currentEQ.edge}%</strong></div></div><button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="nextEQ()">Next Challenge</button>`;
-            if (correct && gameState.eqLevel < 2) { gameState.eqStep++; if (gameState.eqStep >= 3) { gameState.eqLevel++; gameState.eqStep = 0; } }
-        }
-
+        let labUtility;
+        function initLabCharts() { if(labUtility) return; labUtility = new Chart(document.getElementById('labUtilityChart').getContext('2d'), { type: 'line', data: { labels: Array.from({length:101}, (_,i) => i/100), datasets: [{ data: [], borderColor: '#a371f7', borderWidth: 2, pointRadius: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { display: false } }, y: { display: false } } } }); recalcLab(); }
+        function recalcLab() { const p = document.getElementById('lab-p').value / 100; const b = (document.getElementById('lab-b').value / 100) - 1; const f = (b * p - (1-p)) / b; document.getElementById('lab-p-val').textContent = (p*100).toFixed(0) + '%'; document.getElementById('lab-b-val').textContent = (b+1).toFixed(2); document.getElementById('lab-result').textContent = Math.max(0, f*100).toFixed(1) + '%'; if(labUtility) { const data = []; for(let i=0; i<=100; i++) { const frac = i/100; data.push(frac === 1 ? -10 : p * Math.log(1 + frac * b) + (1-p) * Math.log(1 - frac)); } labUtility.data.datasets[0].data = data; labUtility.update('none'); } }
+        function updatePath() { const target = document.getElementById('target-bank-slider').value; document.getElementById('target-bank-val').textContent = '$' + parseInt(target).toLocaleString(); const f = (sim.rigging - (1 - sim.rigging)); if (f <= 0) { document.getElementById('path-result').textContent = "Infinite (No Edge)"; return; } const G = Math.pow(1 + f, sim.rigging) * Math.pow(1 - f, 1 - sim.rigging); const flips = Math.log(target / 10000) / Math.log(G); document.getElementById('path-result').textContent = `Estimated Trades: ${Math.ceil(flips)}`; document.getElementById('path-fill').style.width = Math.min(100, (10000/target)*100) + '%'; }
+        
+        window.onkeydown = (e) => { if(e.code === 'Space') { e.preventDefault(); flipOnce(); } if(e.code === 'Enter') { e.preventDefault(); toggleAuto(); } }
         function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
-        window.onkeydown = (e) => { if (e.code === 'Space') { e.preventDefault(); flipOnce(); } if (e.code === 'Enter') { e.preventDefault(); toggleAuto(); } }
+        function nextOQ() {} function nextEQ() {} // Games from prev tabs handled differently now
     </script>
 </body>
 </html>
