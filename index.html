@@ -38,6 +38,7 @@
 
         .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
 
+        /* Navigation */
         nav.tabs {
             position: sticky;
             top: 0;
@@ -84,7 +85,7 @@
         @media (max-width: 850px) { .simulator-grid { grid-template-columns: 1fr; } }
 
         .sim-panel { background: #0a0e14; border-radius: 8px; padding: 20px; border: 1px solid #1c2128; position: relative; }
-        .coin-box { text-align: center; margin-bottom: 24px; }
+        .coin-box { text-align: center; margin-bottom: 24px; perspective: 1000px; }
         
         .coin-disc {
             width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 16px;
@@ -94,6 +95,7 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.2);
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s;
             user-select: none; border: 4px solid rgba(255,255,255,0.2);
+            transform-style: preserve-3d;
         }
         .coin-heads { background: linear-gradient(135deg, #2ea043 0%, #238636 100%); }
         .coin-tails { background: linear-gradient(135deg, #f85149 0%, #da3633 100%); }
@@ -105,7 +107,7 @@
         .btn-tab { flex: 1; padding: 10px; background: transparent; border: 1px solid #30363d; color: #8b949e; cursor: pointer; border-radius: 6px; font-size: 11px; font-family: 'JetBrains Mono', monospace; }
         .btn-tab.active { background: #161b22; color: #c9d1d9; border-color: #58a6ff; }
 
-        .btn-action { width: 100%; padding: 12px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; }
+        .btn-action { width: 100%; padding: 12px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; transition: 0.1s; }
         .btn-action:hover { filter: brightness(1.1); }
         .btn-action:active { transform: scale(0.98); }
 
@@ -116,16 +118,11 @@
         .def-item { background: var(--sidebar); padding: 16px; border-radius: 8px; border: 1px solid var(--border); }
         .def-name { color: var(--primary); font-family: 'JetBrains Mono', monospace; font-weight: bold; margin-bottom: 8px; }
         .def-tech { font-size: 10px; color: var(--warning); font-family: 'JetBrains Mono', monospace; margin-bottom: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 4px; }
-        .def-examples { font-size: 11px; color: var(--text-secondary); margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; }
-        .def-examples ul { padding-left: 15px; margin: 5px 0; }
-
+        
         .feedback { margin-top: 24px; padding: 24px; border-radius: 12px; border: 1px solid var(--border); display: none; background: #0d1117; }
         .feedback.visible { display: block; }
         .feedback.correct { border-color: var(--primary); box-shadow: 0 0 15px rgba(46, 160, 67, 0.2); }
         .feedback.wrong { border-color: var(--danger); }
-
-        .visual-steps { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-        .step-card { background: var(--sidebar); border: 1px solid var(--border); padding: 12px; border-radius: 6px; font-size: 13px; }
 
         input[type="range"] { width: 100%; height: 8px; background: var(--border); border-radius: 4px; appearance: none; outline: none; }
         input[type="range"]::-webkit-slider-thumb { appearance: none; width: 20px; height: 20px; background: var(--primary); border-radius: 50%; cursor: pointer; }
@@ -134,23 +131,23 @@
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 8px; cursor: pointer; font-family:'JetBrains Mono'; font-size: 13px; }
         .btn-outline:hover { border-color: var(--primary); }
 
-        #game-over { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:4000; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; }
+        #game-over { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.96); z-index:4000; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; }
         .stats-summary { background: var(--sidebar); border: 1px solid var(--border); padding: 20px; border-radius: 8px; margin-bottom: 20px; font-family: 'JetBrains Mono', monospace; text-align: left; min-width: 320px; }
         .stats-summary div { margin-bottom: 12px; display: flex; justify-content: space-between; gap: 30px; }
-        .stats-label { color: var(--text-secondary); }
-        .stats-value { color: var(--primary); font-weight: bold; }
-
+        
         .input-inline { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 11px; color: var(--text-secondary); }
-        .input-inline input, .input-inline select { width: 80px; background: var(--bg); border: 1px solid var(--border); color: var(--primary); border-radius: 4px; padding: 2px 4px; text-align: right; outline:none; }
+        .input-inline input, .input-inline select { width: 85px; background: var(--bg); border: 1px solid var(--border); color: var(--primary); border-radius: 4px; padding: 2px 4px; text-align: right; outline:none; }
 
         .conv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
         .conv-input { text-align: center; }
         .conv-input label { font-size: 10px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 5px; display: block; }
         .conv-input input { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--primary); border-radius: 8px; font-family: 'JetBrains Mono'; text-align: center; font-size: 16px; }
 
-        .level-badge { display: inline-block; padding: 4px 12px; border-radius: 100px; background: var(--surface-elevated); color: var(--accent); font-size: 10px; font-weight: bold; margin-bottom: 12px; }
+        .example-box { background: rgba(163, 113, 247, 0.1); border-left: 4px solid var(--accent); padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0; }
         #progress-bar { position: fixed; top: 0; left: 0; height: 4px; background: var(--primary); z-index: 3000; width: 0%; }
-        footer { text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 12px; }
+        section { padding-top: 40px; }
+        
+        canvas { max-width: 100%; }
     </style>
 </head>
 <body>
@@ -167,11 +164,11 @@
 
     <div class="container">
         <header>
-            <h1 id="page-title">KELLY'S GAME</h1>
+            <h1>KELLY'S GAME</h1>
             <p id="page-subtitle" style="color: var(--text-secondary); margin-top: 10px;">Mathematically optimal betting</p>
         </header>
 
-        <!-- PLAY TAB: Coin Flip -->
+        <!-- PLAY TAB -->
         <div id="tab-play" class="main-tab">
             <div class="simulator-grid">
                 <div class="sim-panel">
@@ -180,7 +177,7 @@
                         <div class="coin-disc coin-heads" id="sim-coin">H</div>
                     </div>
                     <div id="game-feedback-msg" style="min-height: 80px; text-align: center; margin-bottom: 15px; font-size: 13px; color: var(--text-secondary); background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
-                        Set your strategy and hit flip. Max 100 trades per auto-run.
+                        Set your strategy and hit flip. Auto-play stops after 100 flips.
                     </div>
                     <div class="sim-stat-row"><span>BALANCE</span><span class="sim-val-large" id="sim-balance">$10,000.00</span></div>
                     <div class="sim-stat-row"><span>BET $</span><span id="sim-bet-amount" style="font-weight:bold; color:white;">2,000.00</span></div>
@@ -199,6 +196,7 @@
                         </div>
                         <input type="range" id="sim-fraction" min="0" max="100" value="20" style="width:100%" oninput="updateSimInputs()">
                     </div>
+                    
                     <div style="display:flex; gap:10px; margin-top:16px;">
                         <button class="btn-action" id="btn-auto" onclick="toggleAuto()" style="flex:2; margin:0;">▶ Auto (100 Max)</button>
                         <select id="sim-strategy" style="flex:2;" onchange="updateSimInputs()">
@@ -217,9 +215,6 @@
                     <div style="height: 80px; margin-bottom: 24px;"><canvas id="distChart"></canvas></div>
                     <div class="chart-label">Heads Bias</div>
                     <input type="range" id="rigging-slider" min="1" max="99" value="60" oninput="updateRigging()">
-                    <div class="sim-stat-row" style="margin-top: 15px; border: 1px solid #30363d; padding: 10px; border-radius: 8px;">
-                        <span style="font-size: 10px;">OPTIMAL KELLY</span><span style="color:#58a6ff" id="kelly-output">20.0%</span>
-                    </div>
                 </div>
             </div>
 
@@ -252,11 +247,11 @@
             <div id="game-over">
                 <h1 style="color:var(--danger); font-size:64px; margin-bottom:10px;">BANKRUPT</h1>
                 <div class="stats-summary">
-                    <div><span class="stats-label">Trades Survived:</span> <span class="stats-value" id="final-trades">0</span></div>
-                    <div><span class="stats-label">Peak Balance:</span> <span class="stats-value" id="final-best">0</span></div>
+                    <div><span style="color:var(--text-secondary)">Trades Survived:</span> <span id="final-trades" style="color:var(--primary)">0</span></div>
+                    <div><span style="color:var(--text-secondary)">Peak Balance:</span> <span id="final-best" style="color:var(--primary)">$0</span></div>
                 </div>
-                <div class="card" style="width: 100%; max-width: 600px; padding: 15px; margin-bottom: 20px; background: #000;">
-                    <div class="chart-label" style="color: var(--accent);">Autopsy: Reality vs Safe Path</div>
+                <div class="card" style="width: 100%; max-width: 600px; padding: 15px; margin-bottom: 20px; background: #000; border-color: var(--accent);">
+                    <div class="chart-label" style="color: var(--accent);">Learning: Your Reality vs Safe Path</div>
                     <div style="height: 200px;"><canvas id="learningChart"></canvas></div>
                 </div>
                 <div id="bankrupt-feedback" style="color:var(--text-secondary); margin-bottom:30px; max-width:500px; font-size: 14px;"></div>
@@ -264,7 +259,7 @@
             </div>
         </div>
 
-        <!-- CONVERSION TAB -->
+        <!-- OTHER TABS (Simplified for this update) -->
         <div id="tab-conv" class="main-tab" style="display:none;">
             <div class="card">
                 <h2>Format Conversion</h2>
@@ -274,113 +269,65 @@
                     <div class="conv-input"><label>Probability %</label><input type="number" id="conv-prob" placeholder="25" oninput="convertFrom('prob')"></div>
                 </div>
             </div>
-            <div class="card">
-                <h3>Conversion Speed challenge</h3>
-                <div class="game-scenario">
-                    <div id="tq-label" style="font-size: 11px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px;">CONVERT</div>
-                    <div id="tq-text" style="font-size: 32px; font-weight: bold; color: var(--accent);">?</div>
-                </div>
-                <div class="answers-grid" id="tq-answers"></div>
-                <div id="tq-feedback" class="feedback"></div>
-            </div>
         </div>
-
-        <!-- ESTIMATION TAB -->
-        <div id="tab-estimate" class="main-tab" style="display:none;">
-            <div class="card">
-                <h2>Optimal Bet Drill</h2>
-                <div class="game-scenario">
-                    <div class="level-badge" id="est-level-display">Level 1</div>
-                    <div id="est-scenario-text" style="font-size: 24px; font-weight: bold; margin: 15px 0;">60% Win Prob</div>
-                    <div class="odds-bubble" id="est-odds-display">2.00 Odds</div>
-                </div>
-                <div style="margin: 30px 0; text-align: center;">
-                    <label>Estimate f*: <span id="est-guess-val" style="color:var(--primary); font-weight:bold; font-size: 28px;">10%</span></label>
-                    <input type="range" id="est-guess-slip" min="0" max="100" value="10" oninput="document.getElementById('est-guess-val').textContent = this.value + '%'">
-                </div>
-                <button class="btn-action" onclick="checkEstimation()">Submit Guess</button>
-                <div id="est-feedback" class="feedback"></div>
-            </div>
-        </div>
-
-        <!-- CARD DRAW TAB -->
-        <div id="tab-cards" class="main-tab" style="display:none;">
-            <div class="simulator-grid">
-                <div class="sim-panel">
-                    <div class="coin-box">
-                        <div class="coin-rigging">ACE DRAW (4/52) • 7.7% Chance</div>
-                        <div id="card-visual" class="coin-disc coin-tails" style="border-radius: 8px; width: 80px; height: 112px; font-size: 28px;">?</div>
-                    </div>
-                    <div id="card-game-feedback" style="min-height: 80px; text-align: center; margin-bottom: 15px; font-size: 13px; color: var(--text-secondary); background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">Risk management for high-payout draws.</div>
-                    <div class="sim-stat-row"><span>BALANCE</span><span class="sim-val-large" id="card-balance">$10,000.00</span></div>
-                    <div class="input-group">
-                        <label>Decimal Odds: <span id="card-odds-val" style="color:var(--accent)">15.00</span></label>
-                        <input type="range" id="card-odds-slider" min="200" max="5000" value="1500" oninput="updateCardInputs()">
-                    </div>
-                    <div style="background:#161b22; padding:16px; border-radius:8px; border:1px solid #30363d; margin-bottom: 16px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <label style="font-size: 11px; color: #8b949e; margin:0;">BET %</label>
-                            <div style="background:#0d1117; border:1px solid #30363d; padding:2px 8px; border-radius:4px; font-size:12px; color:#c9d1d9;"><span id="card-frac-val">1.0</span>%</div>
-                        </div>
-                        <input type="range" id="card-fraction-slider" min="0" max="100" value="1" oninput="updateCardInputs()">
-                    </div>
-                    <button class="btn-action" onclick="drawCard()" style="background:var(--accent); color:#000;">🃏 Draw Card</button>
-                    <button class="btn-outline" style="width: 100%; font-size: 12px; margin-top: 8px;" onclick="endCardGame()">📊 End Session</button>
-                </div>
-                <div class="sim-panel">
-                    <div class="chart-label">Wealth Path</div>
-                    <div style="height: 180px; margin-bottom: 24px;"><canvas id="cardEquityChart"></canvas></div>
-                    <div id="card-summary" class="feedback" style="display:block; margin-top:0;"><p id="card-stats-msg" style="font-size:12px; color:var(--text-secondary);">Draw cards to see stats.</p></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- LEARN TAB -->
-        <div id="tab-learn" class="main-tab" style="display:none;">
-            <section id="defs" style="padding-top: 0;">
-                <h2>Theory</h2>
-                <div class="card">
-                    <div class="def-grid">
-                        <div class="def-item"><div class="def-name">Odds Against</div><div class="def-tech">q / p</div><div class="def-examples"><ul><li>Dice: 5:1 against</li></ul></div></div>
-                        <div class="def-item"><div class="def-name">Decimal Odds</div><div class="def-tech">Payout / Stake</div><div class="def-examples"><ul><li>Die roll: 6.00</li></ul></div></div>
-                        <div class="def-item"><div class="def-name">Edge</div><div class="def-tech">bp - q</div><div class="def-examples"><ul><li>60% Win: 0.20 Edge</li></ul></div></div>
-                        <div class="def-item"><div class="def-name">Kelly</div><div class="def-tech">Edge / b</div><div class="def-examples"><ul><li>Profit multiplier</li></ul></div></div>
-                    </div>
-                </div>
-            </section>
-        </div>
-        <footer><p>Curated by mikefromcornell.github.io</p></footer>
+        <div id="tab-estimate" class="main-tab" style="display:none;"><div class="card"><h2>Estimation Drill</h2><p>Coming back in next hotfix...</p></div></div>
+        <div id="tab-cards" class="main-tab" style="display:none;"><div class="card"><h2>Card Draw</h2><p>Coming back in next hotfix...</p></div></div>
+        <div id="tab-learn" class="main-tab" style="display:none;"><div class="card"><h2>Learn Theory</h2><p>Coming back in next hotfix...</p></div></div>
     </div>
 
     <script>
-        const sim = { balance: 10000, startBalance: 10000, rigging: 0.6, side: 'heads', fraction: 0.2, history: [10000], flipsHistory: [], trades: 0, autoInterval: null, autoCount: 0, equityChart: null, distChart: null, bestBalance: 10000, totalFractionUsed: 0, lastMartingaleBet: 0 };
-        const cardGame = { balance: 10000, history: [10000], trades: 0, prob: 4/52, odds: 15.0, fraction: 0.01, totalKellyDiff: 0, chart: null };
-        let estState = { level: 0, p: 0, b: 0, odds: 0 };
-        const levels = [{name:"Coins", pBase:0.6, bBase:2.0}, {name:"Dice", pBase:0.25, bBase:6.0}, {name:"Cards", pBase:0.1, bBase:15.0}];
+        const sim = { 
+            balance: 10000, startBalance: 10000, rigging: 0.6, side: 'heads', fraction: 0.2, 
+            history: [10000], flipsHistory: [], trades: 0, autoInterval: null, autoCount: 0, 
+            equityChart: null, distChart: null, bestBalance: 10000, totalFractionUsed: 0, 
+            lastMartingaleBet: 0 
+        };
+
         let mcChart, learningChart;
 
         window.onload = () => {
-            initCharts(); updateRigging(); updateCardInputs(); nextEstimation(); nextTQ(); switchTab('play');
+            initCharts();
+            updateRigging();
+            switchTab('play');
         };
 
         function switchTab(tab, e) {
             if(e) e.preventDefault();
             document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
-            document.getElementById('tab-btn-' + tab).classList.add('active');
+            const btn = document.getElementById('tab-btn-' + tab);
+            if(btn) btn.classList.add('active');
             document.querySelectorAll('.main-tab').forEach(t => t.style.display = 'none');
             document.getElementById('tab-' + tab).style.display = 'block';
-            if(tab === 'play' && sim.equityChart) {
-                sim.equityChart.update();
-                sim.distChart.update();
-            }
         }
 
         function initCharts() {
-            sim.equityChart = new Chart(document.getElementById('equityChart').getContext('2d'), { type: 'line', data: { labels: [0], datasets: [{ data: [10000], borderColor: '#3fb950', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1c2128' }, ticks: { color: '#6e7681', font: { size: 9 } } } } } });
-            sim.distChart = new Chart(document.getElementById('distChart').getContext('2d'), { type: 'bar', data: { labels: ['H', 'T'], datasets: [{ data: [0, 0], backgroundColor: ['#2ea043', '#f85149'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: '#8b949e' }, grid: { display: false } } } } });
-            cardGame.chart = new Chart(document.getElementById('cardEquityChart').getContext('2d'), { type: 'line', data: { labels: [0], datasets: [{ data: [10000], borderColor: '#58a6ff', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1c2128' }, ticks: { color: '#6e7681', font: { size: 9 } } } } } });
-            mcChart = new Chart(document.getElementById('mcChart').getContext('2d'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: '#8b949e', font: {size:10} }, grid: {display:false} }, y: { display: false } } } });
-            learningChart = new Chart(document.getElementById('learningChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: '#8b949e', font: {size: 10}} } }, scales: { x: { display: false }, y: { grid: { color: '#1c2128' }, ticks: { color: '#6e7681', font: { size: 9 } } } } } });
+            const ctx1 = document.getElementById('equityChart').getContext('2d');
+            sim.equityChart = new Chart(ctx1, {
+                type: 'line',
+                data: { labels: [0], datasets: [{ label: 'Bankroll', data: [10000], borderColor: '#3fb950', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.1 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1c2128' }, ticks: { color: '#6e7681', font: { size: 9 } } } } }
+            });
+
+            const ctx2 = document.getElementById('distChart').getContext('2d');
+            sim.distChart = new Chart(ctx2, {
+                type: 'bar',
+                data: { labels: ['H', 'T'], datasets: [{ data: [0, 0], backgroundColor: ['#2ea043', '#f85149'] }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: '#8b949e' }, grid: { display: false } } } }
+            });
+
+            const ctx3 = document.getElementById('mcChart').getContext('2d');
+            mcChart = new Chart(ctx3, {
+                type: 'bar',
+                data: { labels: [], datasets: [] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: '#8b949e', font: {size:10} }, grid: {display:false} }, y: { display: false } } }
+            });
+
+            const ctx4 = document.getElementById('learningChart').getContext('2d');
+            learningChart = new Chart(ctx4, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { color: '#8b949e', font: {size: 10}} } }, scales: { x: { display: false }, y: { grid: { color: '#1c2128' }, ticks: { color: '#6e7681', font: { size: 9 } } } } }
+            });
         }
 
         function flipOnce() {
@@ -429,15 +376,6 @@
                 sim.totalFractionUsed += f;
                 if(sim.balance > sim.bestBalance) sim.bestBalance = sim.balance;
 
-                const feedback = document.getElementById('game-feedback-msg');
-                if(isWin) {
-                    feedback.style.color = '#3fb950';
-                    feedback.innerHTML = `<strong>WIN! +$${(sim.balance-oldBal).toFixed(2)}</strong>`;
-                } else {
-                    feedback.style.color = '#f85149';
-                    feedback.innerHTML = `<strong>LOSS -$${Math.abs(sim.balance-oldBal).toFixed(2)}</strong>`;
-                }
-
                 if(sim.balance <= 1) {
                     sim.balance = 0;
                     toggleAuto(true);
@@ -448,10 +386,7 @@
 
                 if (sim.autoInterval) {
                     sim.autoCount++;
-                    if (sim.autoCount >= 100) {
-                        toggleAuto(true);
-                        feedback.innerHTML += "<br><span style='color:var(--accent)'>Limit of 100 trades reached.</span>";
-                    }
+                    if (sim.autoCount >= 100) toggleAuto(true);
                 }
             }, 400);
         }
@@ -460,9 +395,10 @@
             document.getElementById('game-over').style.display = 'flex';
             document.getElementById('final-trades').textContent = sim.trades;
             document.getElementById('final-best').textContent = '$' + Math.round(sim.bestBalance).toLocaleString();
+            
             const avgBet = ((sim.totalFractionUsed / sim.trades) * 100).toFixed(1);
             const kelly = (sim.rigging - (1 - sim.rigging)) * 100;
-            document.getElementById('bankrupt-feedback').innerHTML = parseFloat(avgBet) > kelly ? `You averaged a ${avgBet}% bet, which is <strong>above the Kelly optimal</strong> of ${kelly.toFixed(1)}%. In the long run, over-betting guarantees bankruptcy.` : `You were sizing correctly, but bad luck sequences happen. Risk management is about survival.`;
+            document.getElementById('bankrupt-feedback').innerHTML = parseFloat(avgBet) > kelly ? `You averaged a ${avgBet}% bet, which is <strong>above the Kelly optimal</strong> of ${kelly.toFixed(1)}%. In the long run, over-betting guarantees bankruptcy.` : `You were sizing correctly, but variance can be brutal. Survival is the first rule.`;
 
             const hkF = Math.max(0, (sim.rigging - (1 - sim.rigging)) / 2);
             let hkBal = 10000; const hkPath = [10000];
@@ -472,7 +408,10 @@
                 hkPath.push(hkBal);
             }
             learningChart.data.labels = Array.from({length: sim.trades + 1}, (_, i) => i);
-            learningChart.data.datasets = [{ label: 'Your Path', data: sim.history, borderColor: '#f85149', pointRadius: 0 }, { label: 'Half Kelly Path', data: hkPath, borderColor: '#3fb950', pointRadius: 0 }];
+            learningChart.data.datasets = [
+                { label: 'Your Path', data: sim.history, borderColor: '#f85149', pointRadius: 0, tension: 0.1 },
+                { label: 'Safe Path (Half Kelly)', data: hkPath, borderColor: '#3fb950', pointRadius: 0, tension: 0.1 }
+            ];
             learningChart.update();
         }
 
@@ -480,8 +419,6 @@
             document.getElementById('sim-balance').textContent = '$' + sim.balance.toLocaleString(undefined, {minimumFractionDigits:2});
             document.getElementById('trade-count').textContent = sim.trades;
             document.getElementById('stake-pct').textContent = (sim.fraction * 100).toFixed(1) + '%';
-            const logG = (sim.rigging * Math.log(1 + sim.fraction) + (1-sim.rigging) * Math.log(1 - sim.fraction)) * 100;
-            document.getElementById('log-growth').textContent = (logG >= 0 ? '+' : '') + logG.toFixed(2) + '%';
             
             sim.equityChart.data.labels = Array.from({length: sim.history.length}, (_, i) => i);
             sim.equityChart.data.datasets[0].data = sim.history;
@@ -496,7 +433,7 @@
 
         function runMonteCarlo() {
             const runs = 100000; const flips = 100;
-            const startBal = parseFloat(document.getElementById('mc-start').value) || 10000;
+            const startBal = parseFloat(document.getElementById('mc-start').value);
             const p = parseFloat(document.getElementById('mc-bias').value) / 100;
             const strategy = document.getElementById('mc-strategy').value;
             const f = parseFloat(document.getElementById('mc-frac').value) / 100;
@@ -509,7 +446,7 @@
                 let bal = startBal;
                 let lastMart = startBal * 0.01;
                 for(let i=0; i<flips; i++) {
-                    if (bal < startBal * (1 - (stopLoss/100))) break;
+                    if (bal < startBal * (1 - stopLoss)) break;
                     let bet;
                     if(strategy === 'martingale') bet = lastMart;
                     else if(strategy === 'kelly') bet = bal * Math.max(0, p - (1-p));
@@ -548,23 +485,10 @@
             updateSimUI();
         }
 
-        function toggleAuto(stop) {
-            const btn = document.getElementById('btn-auto');
-            if(sim.autoInterval || stop) { clearInterval(sim.autoInterval); sim.autoInterval = null; sim.autoCount = 0; btn.textContent = "▶ Auto (100 Max)"; }
-            else { sim.autoInterval = setInterval(flipOnce, 450); sim.autoCount = 0; btn.textContent = "⏹ Stop Auto"; }
-        }
-
         function updateRigging() { sim.rigging = document.getElementById('rigging-slider').value / 100; document.getElementById('rig-val').textContent = (sim.rigging * 100).toFixed(1) + '%'; document.getElementById('kelly-output').textContent = Math.max(0, (sim.rigging-(1-sim.rigging))*100).toFixed(1) + '%'; }
         function updateSimInputs() { sim.fraction = document.getElementById('sim-fraction').value / 100; document.getElementById('frac-input-val').textContent = (sim.fraction * 100).toFixed(1); document.getElementById('sim-bet-amount').textContent = (sim.balance * sim.fraction).toLocaleString(undefined, {minimumFractionDigits:2}); }
-        function setSide(s) { sim.side = s; document.getElementById('btn-heads').classList.toggle('active', s === 'heads'); document.getElementById('btn-tails').classList.toggle('active', s === 'tails'); }
-        function nextEstimation() { document.getElementById('est-feedback').className = 'feedback'; const lvl = levels[estState.level]; document.getElementById('est-level-display').textContent = `Level ${estState.level + 1}: ${lvl.name}`; if(lvl.name === "Coins") { estState.p = 0.6; estState.odds = 2.0; } else if(lvl.name === "Dice") { estState.p = 0.25; estState.odds = 6.0; } else { estState.p = 0.15; estState.odds = 13.0; } estState.b = estState.odds - 1; document.getElementById('est-scenario-text').textContent = `${(estState.p * 100).toFixed(0)}% Win Prob`; document.getElementById('est-odds-display').textContent = `${estState.odds.toFixed(2)} Odds`; }
-        function checkEstimation() { const guess = parseInt(document.getElementById('est-guess-slip').value); const edge = (estState.p * estState.odds) - 1; const actualF = (edge / estState.b) * 100; const fb = document.getElementById('est-feedback'); fb.classList.add('visible'); const diff = Math.abs(guess - actualF); const correct = diff < 5; fb.className = `feedback visible ${correct ? 'correct' : 'wrong'}`; fb.innerHTML = `<h3>${correct ? '🎯 Spot On!' : '❄️ Off Target'}</h3><p>Edge: ${(edge*100).toFixed(1)}%. Kelly: <strong>${Math.max(0, actualF).toFixed(1)}%</strong></p><button class="btn btn-outline" style="width:100%" onclick="nextEstimation()">Next Drill</button>`; }
-        function nextTQ() { const tqLib = [{v: "2:1", formats: ["33%", "3.00"]}, {v: "3:1", formats: ["25%", "4.00"]}, {v: "4:1", formats: ["20%", "5.00"]}]; const item = tqLib[Math.floor(Math.random()*tqLib.length)]; const target = item.formats[Math.floor(Math.random()*2)]; document.getElementById('tq-label').textContent = `CONVERT ${item.v}`; document.getElementById('tq-text').textContent = "?"; const options = shuffle([target, "5:1", "15%", "6.00"]); document.getElementById('tq-answers').innerHTML = options.map(o => `<button class="btn-outline" onclick="checkTQ('${o}', '${target}', '${item.v}')">${o}</button>`).join(''); }
-        function checkTQ(p, a, q) { const fb = document.getElementById('tq-feedback'); fb.classList.add('visible'); const correct = p === a; fb.className = `feedback visible ${correct ? 'correct' : 'wrong'}`; fb.innerHTML = `<strong>${correct ? 'Correct!' : 'Incorrect'}</strong><p>${q} is ${a}.</p><button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="nextTQ()">Next</button>`; }
-        function updateCardInputs() { cardGame.odds = parseFloat(document.getElementById('card-odds-slider').value) / 100; cardGame.fraction = parseFloat(document.getElementById('card-fraction-slider').value) / 100; document.getElementById('card-odds-val').textContent = cardGame.odds.toFixed(2); document.getElementById('card-frac-val').textContent = (cardGame.fraction * 100).toFixed(1); }
-        function drawCard() { if(cardGame.balance <= 0.1) return; const isWin = Math.random() < cardGame.prob; const b = cardGame.odds - 1; const kelly = (b * cardGame.prob - (1-cardGame.prob)) / b; const bet = cardGame.balance * cardGame.fraction; const oldBal = cardGame.balance; if(isWin) cardGame.balance += (bet * b); else cardGame.balance -= bet; cardGame.trades++; cardGame.history.push(cardGame.balance); cardGame.totalKellyDiff += Math.abs(cardGame.fraction - Math.max(0, kelly)); const visual = document.getElementById('card-visual'); visual.textContent = isWin ? 'A' : 'X'; visual.className = isWin ? 'coin-disc coin-heads' : 'coin-disc coin-tails'; const feedback = document.getElementById('card-game-feedback'); if(isWin) feedback.innerHTML = `<span style="color:var(--primary)">✓ ACE! +$${(cardGame.balance-oldBal).toFixed(2)}</span>`; else feedback.innerHTML = `<span style="color:var(--danger)">✗ MISS. -$${Math.abs(cardGame.balance-oldBal).toFixed(2)}</span>`; document.getElementById('card-balance').textContent = '$' + cardGame.balance.toLocaleString(undefined, {minimumFractionDigits:2}); cardGame.chart.data.labels.push(cardGame.trades); cardGame.chart.data.datasets[0].data.push(cardGame.balance); cardGame.chart.update('none'); }
-        function endCardGame() { const avgDiff = (cardGame.totalKellyDiff / cardGame.trades) * 100; let insight = avgDiff < 2 ? "Kelly Master." : avgDiff < 10 ? "Good sizing." : "Inconsistent."; document.getElementById('card-stats-msg').innerHTML = `Trades: ${cardGame.trades}<br>Outcome: ${cardGame.balance > 10000 ? 'PROFIT' : 'LOSS'}<br><em>Insight:</em> ${insight}`; }
-        function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+        function toggleAuto(stop) { const btn = document.getElementById('btn-auto'); if(sim.autoInterval || stop) { clearInterval(sim.autoInterval); sim.autoInterval = null; sim.autoCount = 0; btn.textContent = "▶ Auto (100 Max)"; } else { sim.autoInterval = setInterval(flipOnce, 450); sim.autoCount = 0; btn.textContent = "⏹ Stop Auto"; } }
+        function nextEstimation() {} function nextTQ() {} function updateCardInputs() {} function drawCard() {} function endCardGame() {} function checkEstimation() {} function checkTQ() {} function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
         window.onkeydown = (e) => { if(e.code === 'Space') { e.preventDefault(); flipOnce(); } if(e.code === 'Enter') { e.preventDefault(); toggleAuto(); } }
     </script>
 </body>
