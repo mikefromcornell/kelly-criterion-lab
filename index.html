@@ -491,11 +491,11 @@
             document.getElementById('log-growth').textContent = (logG >= 0 ? '+' : '') + logG.toFixed(2) + '%';
             sim.equityChart.data.labels = Array.from({length: sim.history.length}, (_, i) => i);
             sim.equityChart.data.datasets[0].data = sim.history;
-            sim.equityChart.update('none');
+            sim.equityChart.update();
             const h = sim.flipsHistory.filter(x => x === 'heads').length;
             const t = sim.flipsHistory.filter(x => x === 'tails').length;
             sim.distChart.data.datasets[0].data = [h, t];
-            sim.distChart.update('none');
+            sim.distChart.update();
             updateSimInputs();
         }
 
