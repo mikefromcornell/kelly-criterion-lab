@@ -182,6 +182,7 @@
                     </div>
                     <div class="sim-stat-row"><span>BALANCE</span><span class="sim-val-large" id="sim-balance">$10,000.00</span></div>
                     <div class="sim-stat-row"><span>BET $</span><span id="sim-bet-amount" style="font-weight:bold; color:white;">2,000.00</span></div>
+                    <div class="sim-stat-row"><span>TRADES</span><span id="trade-count" style="font-weight:bold; color:white;">0</span></div>
                     <div class="btn-group">
                         <button class="btn-tab active" id="btn-heads" onclick="setSide('heads')">HEADS</button>
                         <button class="btn-tab" id="btn-tails" onclick="setSide('tails')">TAILS</button>
@@ -210,7 +211,7 @@
                     <button class="btn-outline" style="margin-top: 15px; width: 100%; font-size: 11px; border-color: var(--border); color: var(--text-secondary); height: 35px;" onclick="resetGame()">🔄 Reset Game</button>
                 </div>
                 <div class="sim-panel">
-                    <div class="chart-label">Wealth Path</div>
+                    <div class="chart-label" title="Wealth Path">Bankroll Over Time</div>
                     <div style="height: 180px; margin-bottom: 24px;"><canvas id="equityChart"></canvas></div>
                     <div class="chart-label">Actual Frequency (Last 1000)</div>
                     <div style="height: 80px; margin-bottom: 24px;"><canvas id="distChart"></canvas></div>
@@ -363,7 +364,7 @@
         let mcChart, learningChart;
 
         window.onload = () => {
-            initCharts(); updateRigging(); updateCardInputs(); nextEstimation(); nextTQ(); switchTab('play');
+            initCharts(); updateRigging(); updateSimUI(); updateCardInputs(); nextEstimation(); nextTQ(); switchTab('play');
         };
 
         function switchTab(tab, e) {
@@ -378,9 +379,30 @@
 
         function initCharts() {
             sim.equityChart = new Chart(document.getElementById('equityChart').getContext('2d'), { 
-                type: 'line', 
-                data: { labels: [0], datasets: [{ data: [10000], borderColor: '#3fb950', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.1 }] }, 
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1c2128' }, ticks: { color: '#6e7681', font: { size: 9 } } } } } 
+                type: 'bar', 
+                data: { 
+                    labels: [0], 
+                    datasets: [{ 
+                        label: 'Bankroll', 
+                        data: [10000], 
+                        backgroundColor: '#3fb950', 
+                        borderRadius: 2 
+                    }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    animation: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        x: { display: false }, 
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: '#1c2128' }, 
+                            ticks: { color: '#6e7681', font: { size: 9 } } 
+                        } 
+                    } 
+                } 
             });
             sim.distChart = new Chart(document.getElementById('distChart').getContext('2d'), { 
                 type: 'bar', 
@@ -484,18 +506,26 @@
         }
 
         function updateSimUI() {
-            document.getElementById('sim-balance').textContent = '$' + sim.balance.toLocaleString(undefined, {minimumFractionDigits:2});
-            document.getElementById('trade-count').textContent = sim.trades;
-            document.getElementById('stake-pct').textContent = (sim.fraction * 100).toFixed(1) + '%';
+            const balEl = document.getElementById('sim-balance');
+            if (balEl) balEl.textContent = '$' + sim.balance.toLocaleString(undefined, {minimumFractionDigits:2});
+            const tradeCountEl = document.getElementById('trade-count');
+            if (tradeCountEl) tradeCountEl.textContent = sim.trades;
+            const stakePctEl = document.getElementById('stake-pct');
+            if (stakePctEl) stakePctEl.textContent = (sim.fraction * 100).toFixed(1) + '%';
             const logG = (sim.rigging * Math.log(1 + sim.fraction) + (1-sim.rigging) * Math.log(1 - sim.fraction)) * 100;
-            document.getElementById('log-growth').textContent = (logG >= 0 ? '+' : '') + logG.toFixed(2) + '%';
-            sim.equityChart.data.labels = Array.from({length: sim.history.length}, (_, i) => i);
-            sim.equityChart.data.datasets[0].data = sim.history;
-            sim.equityChart.update();
+            const logGrowthEl = document.getElementById('log-growth');
+            if (logGrowthEl) logGrowthEl.textContent = (logG >= 0 ? '+' : '') + logG.toFixed(2) + '%';
+            if (sim.equityChart) {
+                sim.equityChart.data.labels = Array.from({length: sim.history.length}, (_, i) => i);
+                sim.equityChart.data.datasets[0].data = sim.history;
+                sim.equityChart.update();
+            }
             const h = sim.flipsHistory.filter(x => x === 'heads').length;
             const t = sim.flipsHistory.filter(x => x === 'tails').length;
-            sim.distChart.data.datasets[0].data = [h, t];
-            sim.distChart.update();
+            if (sim.distChart) {
+                sim.distChart.data.datasets[0].data = [h, t];
+                sim.distChart.update();
+            }
             updateSimInputs();
         }
 
@@ -554,7 +584,7 @@
         function setSide(s) { sim.side = s; document.getElementById('btn-heads').classList.toggle('active', s === 'heads'); document.getElementById('btn-tails').classList.toggle('active', s === 'tails'); }
         function toggleAuto(stop) { const btn = document.getElementById('btn-auto'); if(sim.autoInterval || stop) { clearInterval(sim.autoInterval); sim.autoInterval = null; sim.autoCount = 0; btn.textContent = "▶ Auto (100 Max)"; } else { sim.autoInterval = setInterval(flipOnce, 450); sim.autoCount = 0; btn.textContent = "⏹ Stop Auto"; } }
         function updateCardInputs() { cardGame.odds = parseFloat(document.getElementById('card-odds-slider').value) / 100; cardGame.fraction = parseFloat(document.getElementById('card-fraction-slider').value) / 100; document.getElementById('card-odds-val').textContent = cardGame.odds.toFixed(2); document.getElementById('frac-input-val-card').textContent = (cardGame.fraction * 100).toFixed(1); }
-        function drawCard() { if(cardGame.balance <= 0.1) return; const isWin = Math.random() < cardGame.prob; const b = cardGame.odds - 1; const kelly = (b * cardGame.prob - (1-cardGame.prob)) / b; const bet = cardGame.balance * cardGame.fraction; const oldBal = cardGame.balance; if(isWin) cardGame.balance += (bet * b); else cardGame.balance -= bet; cardGame.trades++; cardGame.history.push(cardGame.balance); cardGame.totalKellyDiff += Math.abs(cardGame.fraction - Math.max(0, kelly)); const visual = document.getElementById('card-visual'); visual.textContent = isWin ? 'A' : 'X'; visual.className = isWin ? 'coin-disc coin-heads' : 'coin-disc coin-tails'; const feedback = document.getElementById('card-game-feedback'); if(isWin) feedback.innerHTML = `<span style="color:var(--primary)">✓ ACE! +$${(cardGame.balance-oldBal).toFixed(2)}</span>`; else feedback.innerHTML = `<span style="color:var(--danger)">✗ MISS. -$${Math.abs(cardGame.balance-oldBal).toFixed(2)}</span>`; document.getElementById('card-balance').textContent = '$' + cardGame.balance.toLocaleString(undefined, {minimumFractionDigits:2}); cardGame.chart.data.labels.push(cardGame.trades); cardGame.chart.data.datasets[0].data.push(cardGame.balance); cardGame.chart.update('none'); }
+        function drawCard() { if(cardGame.balance <= 0.1) return; const isWin = Math.random() < cardGame.prob; const b = cardGame.odds - 1; const kelly = (b * cardGame.prob - (1-cardGame.prob)) / b; const bet = cardGame.balance * cardGame.fraction; const oldBal = cardGame.balance; if(isWin) cardGame.balance += (bet * b); else cardGame.balance -= bet; cardGame.trades++; cardGame.history.push(cardGame.balance); cardGame.totalKellyDiff += Math.abs(cardGame.fraction - Math.max(0, kelly)); const visual = document.getElementById('card-visual'); visual.textContent = isWin ? 'A' : 'X'; visual.className = isWin ? 'coin-disc coin-heads' : 'coin-disc coin-tails'; const feedback = document.getElementById('card-game-feedback'); if(isWin) feedback.innerHTML = `<span style="color:var(--primary)">✓ ACE! +$${(cardGame.balance-oldBal).toFixed(2)}</span>`; else feedback.innerHTML = `<span style="color:var(--danger)">✗ MISS. -$${Math.abs(cardGame.balance-oldBal).toFixed(2)}</span>`; document.getElementById('card-balance').textContent = '$' + cardGame.balance.toLocaleString(undefined, {minimumFractionDigits:2}); cardGame.chart.data.labels.push(cardGame.trades); cardGame.chart.data.datasets[0].data.push(cardGame.balance); cardGame.chart.update(); }
         function endCardGame() { const avgDiff = (cardGame.totalKellyDiff / cardGame.trades) * 100; let insight = avgDiff < 2 ? "Kelly Master." : avgDiff < 10 ? "Good sizing." : "Inconsistent."; document.getElementById('card-stats-msg').innerHTML = `Trades: ${cardGame.trades}<br>Outcome: ${cardGame.balance > 10000 ? 'PROFIT' : 'LOSS'}<br><em>Insight:</em> ${insight}`; }
         function nextTQ() { const tqLib = [{v: "2:1", formats: ["33%", "3.00"]}, {v: "3:1", formats: ["25%", "4.00"]}, {v: "4:1", formats: ["20%", "5.00"]}]; const item = tqLib[Math.floor(Math.random()*tqLib.length)]; const target = item.formats[Math.floor(Math.random()*2)]; document.getElementById('tq-label').textContent = `CONVERT ${item.v}`; document.getElementById('tq-text').textContent = "?"; const options = shuffle([target, "5:1", "15%", "6.00"]); document.getElementById('tq-answers').innerHTML = options.map(o => `<button class="btn-outline" onclick="checkTQ('${o}', '${target}', '${item.v}')">${o}</button>`).join(''); }
         function checkTQ(p, a, q) { const fb = document.getElementById('tq-feedback'); fb.classList.add('visible'); const correct = p === a; fb.className = `feedback visible ${correct ? 'correct' : 'wrong'}`; fb.innerHTML = `<strong>${correct ? 'Correct!' : 'Incorrect'}</strong><p>${q} is ${a}.</p><button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="nextTQ()">Next</button>`; }
