@@ -79,6 +79,40 @@
 
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 40px; }
 
+        .play-instructions {
+            background: linear-gradient(135deg, rgba(46, 160, 67, 0.12), rgba(88, 166, 255, 0.06));
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+        }
+        .play-instructions h2 { border: 0; color: var(--primary); font-size: 16px; margin: 0 0 12px; padding: 0; }
+        .instruction-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 0; padding: 0; list-style: none; counter-reset: play-step; }
+        .instruction-steps li { color: var(--text-secondary); font-size: 12px; padding-left: 32px; position: relative; }
+        .instruction-steps li::before {
+            align-items: center;
+            background: var(--primary);
+            border-radius: 50%;
+            color: white;
+            content: counter(play-step);
+            counter-increment: play-step;
+            display: flex;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            height: 22px;
+            justify-content: center;
+            left: 0;
+            position: absolute;
+            top: 0;
+            width: 22px;
+        }
+        .instruction-steps strong { color: var(--text); }
+        .instruction-goal { color: var(--text-secondary); font-size: 12px; margin: 12px 0 0; }
+        @media (max-width: 700px) { .instruction-steps { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 450px) { .instruction-steps { grid-template-columns: 1fr; } }
+
         /* Simulator UI */
         .simulator-grid { display: grid; grid-template-columns: 350px 1fr; gap: 24px; }
         @media (max-width: 850px) { .simulator-grid { grid-template-columns: 1fr; } }
@@ -171,6 +205,16 @@
 
         <!-- PLAY TAB -->
         <div id="tab-play" class="main-tab">
+            <section class="play-instructions" aria-labelledby="how-to-play-title">
+                <h2 id="how-to-play-title">How to Play</h2>
+                <ol class="instruction-steps">
+                    <li><strong>Choose Heads or Tails</strong> as the side you want to bet on.</li>
+                    <li><strong>Set the Heads Bias</strong> to change how often the coin lands heads.</li>
+                    <li><strong>Pick a strategy and bet size.</strong> The fixed-fraction bet starts at 50% of your bankroll.</li>
+                    <li><strong>Flip once or use Auto.</strong> A win adds your stake; a loss subtracts it.</li>
+                </ol>
+                <p class="instruction-goal"><strong>Goal:</strong> Grow your $10,000 bankroll without going broke. Compare your stake with Optimal Kelly and watch the results converge toward the coin's bias. Keyboard: <strong>Space</strong> flips once; <strong>Enter</strong> toggles Auto.</p>
+            </section>
             <div class="simulator-grid">
                 <div class="sim-panel">
                     <div class="coin-box">
@@ -181,7 +225,7 @@
                         Set your strategy and hit flip. Auto-play stops after 100 flips.
                     </div>
                     <div class="sim-stat-row"><span>BALANCE</span><span class="sim-val-large" id="sim-balance">$10,000.00</span></div>
-                    <div class="sim-stat-row"><span>BET $</span><span id="sim-bet-amount" style="font-weight:bold; color:white;">2,000.00</span></div>
+                    <div class="sim-stat-row"><span>BET $</span><span id="sim-bet-amount" style="font-weight:bold; color:white;">5,000.00</span></div>
                     <div class="sim-stat-row"><span>TRADES</span><span id="trade-count" style="font-weight:bold; color:white;">0</span></div>
                     <div class="btn-group">
                         <button class="btn-tab active" id="btn-heads" onclick="setSide('heads')">HEADS</button>
@@ -189,14 +233,14 @@
                     </div>
                     <button class="btn-action" id="flip-btn" onclick="flipOnce()">🟡 Flip Once</button>
                     <div style="font-size: 11px; color: #3fb950; text-align: center; margin-bottom: 16px; font-family:'JetBrains Mono';">
-                        Log Growth: <span id="log-growth">+0.00%</span> • Stake: <span id="stake-pct">0.0%</span>
+                        Log Growth: <span id="log-growth">-3.40%</span> • Stake: <span id="stake-pct">50.0%</span>
                     </div>
                     <div style="background:#161b22; padding:16px; border-radius:8px; border:1px solid #30363d; margin-bottom: 10px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                             <label style="font-size: 11px; color: #8b949e; margin:0;">BET % OF BANKROLL</label>
-                            <div style="background:#0d1117; border:1px solid #30363d; padding:2px 8px; border-radius:4px; font-size:12px; color:#c9d1d9;"><span id="frac-input-val">20.0</span>%</div>
+                            <div style="background:#0d1117; border:1px solid #30363d; padding:2px 8px; border-radius:4px; font-size:12px; color:#c9d1d9;"><span id="frac-input-val">50.0</span>%</div>
                         </div>
-                        <input type="range" id="sim-fraction" min="0" max="100" value="20" style="width:100%" oninput="updateSimInputs()">
+                        <input type="range" id="sim-fraction" min="0" max="100" value="50" style="width:100%" oninput="updateSimInputs()">
                     </div>
                     
                     <div style="display:flex; gap:10px; margin-top:16px;">
@@ -354,7 +398,7 @@
 
     <script>
         const sim = { 
-            balance: 10000, startBalance: 10000, rigging: 0.6, side: 'heads', fraction: 0.2, 
+            balance: 10000, startBalance: 10000, rigging: 0.6, side: 'heads', fraction: 0.5,
             history: [10000], flipsHistory: [], trades: 0, autoInterval: null, autoCount: 0, 
             equityChart: null, distChart: null, bestBalance: 10000, totalFractionUsed: 0, lastMartingaleBet: 0 
         };
@@ -362,6 +406,32 @@
         let estState = { level: 0, p: 0, b: 0, odds: 0 };
         const levels = [{name:"Coins", pBase:0.6, bBase:2.0}, {name:"Dice", pBase:0.25, bBase:6.0}, {name:"Cards", pBase:0.1, bBase:15.0}];
         let mcChart, learningChart;
+
+        const frequencyDataLabels = {
+            id: 'frequencyDataLabels',
+            afterDatasetsDraw(chart) {
+                const values = chart.data.datasets[0].data.map(value => Number(value) || 0);
+                const total = values.reduce((sum, value) => sum + value, 0);
+                const bars = chart.getDatasetMeta(0).data;
+                const { ctx, chartArea } = chart;
+
+                ctx.save();
+                ctx.font = "600 11px 'JetBrains Mono', monospace";
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = 'rgba(13, 17, 23, 0.9)';
+                ctx.fillStyle = '#f0f6fc';
+                bars.forEach((bar, index) => {
+                    const percentage = total === 0 ? 0 : (values[index] / total) * 100;
+                    const label = `${percentage.toFixed(1)}%`;
+                    const y = Math.max(chartArea.top + 12, bar.y - 4);
+                    ctx.strokeText(label, bar.x, y);
+                    ctx.fillText(label, bar.x, y);
+                });
+                ctx.restore();
+            }
+        };
 
         window.onload = () => {
             initCharts(); updateRigging(); updateSimUI(); updateCardInputs(); nextEstimation(); nextTQ(); switchTab('play');
@@ -406,8 +476,9 @@
             });
             sim.distChart = new Chart(document.getElementById('distChart').getContext('2d'), { 
                 type: 'bar', 
-                data: { labels: ['H', 'T'], datasets: [{ data: [0, 0], backgroundColor: ['#2ea043', '#f85149'] }] }, 
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: '#8b949e' }, grid: { display: false } } } } 
+                data: { labels: ['H', 'T'], datasets: [{ data: [0, 0], backgroundColor: ['#2ea043', '#f85149'] }] },
+                plugins: [frequencyDataLabels],
+                options: { responsive: true, maintainAspectRatio: false, animation: false, layout: { padding: { top: 14 } }, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: '#8b949e' }, grid: { display: false } } } }
             });
             cardGame.chart = new Chart(document.getElementById('cardEquityChart').getContext('2d'), { 
                 type: 'line', 
