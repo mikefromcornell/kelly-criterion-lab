@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kelly's Game — Mathematically Optimal Betting</title>
+    <title>Kelly Criterion Calculator — Learn the Optimal Bet Size</title>
+    <meta name="description" content="A free, step-by-step Kelly criterion calculator that shows the optimal bet size live, keeps a history of your previous calculations, and explains every number in the formula.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -75,6 +76,8 @@
 
         header { text-align: center; padding: 40px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
         h1 { font-size: clamp(32px, 8vw, 48px); color: var(--primary); font-family: 'JetBrains Mono', monospace; margin: 0; letter-spacing: -2px; }
+        h1.kc-long { font-size: clamp(23px, 5.6vw, 38px); letter-spacing: -1.5px; }
+        .kc-result { min-width: 0; }
         h2 { font-size: 24px; color: var(--accent); font-family: 'JetBrains Mono', monospace; margin-top: 0; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
 
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 40px; }
@@ -183,6 +186,224 @@
         .level-badge { display: inline-block; padding: 4px 12px; border-radius: 100px; background: var(--surface-elevated); color: var(--accent); font-size: 10px; font-weight: bold; margin-bottom: 12px; }
         #progress-bar { position: fixed; top: 0; left: 0; height: 4px; background: var(--primary); z-index: 3000; width: 0%; }
         footer { text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 12px; }
+
+        /* ==========================================================
+           KELLY CRITERION CALCULATOR  (all classes prefixed .kc-)
+           ========================================================== */
+        .kc-block { scroll-margin-top: 70px; }
+        #kc-top { scroll-margin-top: 70px; }
+
+        .kc-intro {
+            background: linear-gradient(135deg, rgba(46, 160, 67, 0.12), rgba(88, 166, 255, 0.06));
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+        }
+        .kc-intro p { margin: 0 0 10px; }
+        .kc-intro p:last-child { margin-bottom: 0; }
+        .kc-note { font-size: 12px; color: var(--text-secondary); }
+        code.kc-code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1px 5px;
+            font-size: 12px;
+            color: var(--accent);
+        }
+
+        .kc-grid { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(330px, 0.88fr); gap: 22px; align-items: stretch; }
+        @media (max-width: 1000px) { .kc-grid { grid-template-columns: 1fr; } }
+
+        /* ---------- guided steps ---------- */
+        .kc-step {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 16px;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .kc-step:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.09); }
+        .kc-step-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+        .kc-step-num {
+            flex: 0 0 28px; height: 28px; width: 28px; border-radius: 50%;
+            background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center;
+            font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px; margin-top: 2px;
+        }
+        .kc-step h3 { margin: 0 0 4px; font-size: 16px; font-family: 'JetBrains Mono', monospace; color: var(--text); line-height: 1.3; }
+        .kc-help { margin: 0; font-size: 12px; color: var(--text-secondary); }
+        .kc-help + .kc-help { margin-top: 6px; }
+
+        .kc-label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin: 0 0 6px; font-family: 'JetBrains Mono', monospace; }
+        .kc-input {
+            width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+            border-radius: 8px; padding: 11px 12px; font-family: 'JetBrains Mono', monospace; font-size: 15px; outline: none;
+        }
+        .kc-input:focus { border-color: var(--accent); }
+        .kc-input.kc-sm { max-width: 130px; }
+        .kc-input.kc-xs { max-width: 88px; }
+        .kc-inline { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .kc-unit { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-secondary); }
+        .kc-fmtbox { margin-top: 4px; }
+        .kc-err { color: var(--danger); font-size: 12px; margin: 10px 0 0; font-family: 'JetBrains Mono', monospace; }
+
+        .kc-seg { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+        .kc-seg button {
+            background: transparent; border: 1px solid var(--border); color: var(--text-secondary);
+            padding: 8px 12px; border-radius: 8px; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+        }
+        .kc-seg button:hover { border-color: var(--accent); color: var(--text); }
+        .kc-seg button.active { background: var(--surface-elevated); border-color: var(--primary); color: var(--primary); font-weight: 700; }
+
+        .kc-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .kc-chip {
+            background: var(--surface-elevated); border: 1px solid var(--border); color: var(--text);
+            border-radius: 100px; padding: 7px 13px; font-size: 11.5px; cursor: pointer; font-family: 'JetBrains Mono', monospace;
+            transition: 0.15s;
+        }
+        .kc-chip:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
+
+        .kc-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; margin-top: 14px; }
+        .kc-tile { background: var(--sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px; }
+        .kc-tile span { display: block; font-size: 9px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px; line-height: 1.35; }
+        .kc-tile b { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--accent); }
+
+        .kc-slider { width: 100%; height: 8px; background: var(--border); border-radius: 4px; appearance: none; outline: none; margin: 12px 0 4px; }
+        .kc-slider::-webkit-slider-thumb { appearance: none; width: 22px; height: 22px; background: var(--primary); border-radius: 50%; cursor: pointer; border: 3px solid var(--bg); }
+        .kc-slider::-moz-range-thumb { width: 18px; height: 18px; background: var(--primary); border-radius: 50%; cursor: pointer; border: 3px solid var(--bg); }
+        .kc-scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; }
+
+        /* probability comparison bar */
+        .kc-probwrap { position: relative; margin: 16px 0 30px; }
+        .kc-probbar { position: relative; height: 30px; background: var(--sidebar); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .kc-probfill { position: absolute; top: 0; bottom: 0; left: 0; background: linear-gradient(90deg, rgba(248, 81, 73, 0.18), rgba(88, 166, 255, 0.22), rgba(46, 160, 67, 0.30)); }
+        .kc-pin { position: absolute; top: 0; bottom: 0; width: 2px; }
+        .kc-pin.kc-pin-implied { background: var(--warning); }
+        .kc-pin.kc-pin-you { background: var(--primary); box-shadow: 0 0 8px rgba(46, 160, 67, 0.7); }
+        .kc-pinlabel { position: absolute; top: 34px; transform: translateX(-50%); font-size: 10px; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+        .kc-pinlabel.kc-lbl-implied { color: var(--warning); }
+        .kc-pinlabel.kc-lbl-you { color: var(--primary); }
+
+        /* ---------- live result ---------- */
+        .kc-result-card { position: sticky; top: 68px; }
+        @media (max-width: 1000px) { .kc-result-card { position: static; } }
+        .kc-result-card {
+            background: linear-gradient(165deg, rgba(46, 160, 67, 0.10), var(--surface) 55%);
+            border: 1px solid var(--primary);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 0 26px rgba(46, 160, 67, 0.10);
+        }
+        .kc-result-card.kc-flash { animation: kcFlash 1s ease-out 2; }
+        @keyframes kcFlash {
+            0% { box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.55); }
+            100% { box-shadow: 0 0 0 18px rgba(46, 160, 67, 0); }
+        }
+        .kc-kicker { font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; }
+        .kc-big { font-family: 'JetBrains Mono', monospace; font-size: clamp(30px, 7vw, 42px); font-weight: 700; color: var(--primary); line-height: 1.1; letter-spacing: -1px; margin: 6px 0 2px; }
+        .kc-big-sub { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-secondary); }
+        .kc-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 2px; }
+        .kc-badge { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 4px 9px; border-radius: 100px; border: 1px solid var(--border); background: rgba(0, 0, 0, 0.25); color: var(--text-secondary); }
+        .kc-badge.ok { color: var(--primary); border-color: rgba(46, 160, 67, 0.5); }
+        .kc-badge.bad { color: var(--danger); border-color: rgba(248, 81, 73, 0.5); }
+        .kc-badge.warn { color: var(--warning); border-color: rgba(210, 153, 34, 0.5); }
+
+        .kc-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+        .kc-stat { background: rgba(0, 0, 0, 0.28); border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px; }
+        .kc-stat span { display: block; font-size: 9px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px; line-height: 1.35; }
+        .kc-stat b { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--text); }
+
+        .kc-formula { background: #0a0e14; border: 1px dashed var(--primary); border-radius: 10px; padding: 14px; margin-top: 14px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
+        .kc-fl { padding-bottom: 9px; margin-bottom: 9px; border-bottom: 1px solid #1c2128; }
+        .kc-fl:last-child { border-bottom: 0; padding-bottom: 0; margin-bottom: 0; }
+        .kc-fl b { color: var(--primary); }
+        .kc-why { font-family: 'Inter', sans-serif; font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+
+        .kc-warn { display: none; border-radius: 10px; padding: 12px 14px; margin-top: 14px; font-size: 12.5px; border: 1px solid var(--border); line-height: 1.55; }
+        .kc-warn.show { display: block; }
+        .kc-warn.ok { border-color: rgba(46, 160, 67, 0.5); background: rgba(46, 160, 67, 0.08); }
+        .kc-warn.warn { border-color: rgba(210, 153, 34, 0.5); background: rgba(210, 153, 34, 0.08); }
+        .kc-warn.bad { border-color: rgba(248, 81, 73, 0.5); background: rgba(248, 81, 73, 0.08); }
+        .kc-warn.info { border-color: rgba(88, 166, 255, 0.5); background: rgba(88, 166, 255, 0.07); }
+
+        .kc-btnrow { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+        .kc-btn {
+            flex: 1; min-width: 130px; padding: 11px 14px; border-radius: 8px; cursor: pointer;
+            font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; border: 1px solid var(--border);
+            background: transparent; color: var(--text); transition: 0.15s;
+        }
+        .kc-btn:hover { filter: brightness(1.12); }
+        .kc-btn-primary { background: #238636; border-color: #238636; color: #fff; }
+        .kc-btn-ghost { color: var(--text-secondary); }
+        .kc-btn-danger { color: var(--danger); border-color: rgba(248, 81, 73, 0.4); }
+        .kc-btn-sm { flex: 0 0 auto; min-width: 0; padding: 6px 10px; font-size: 10px; border-radius: 6px; }
+
+        .kc-live-chip {
+            display: none; position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 2500;
+            background: rgba(13, 17, 23, 0.97); border: 1px solid var(--primary); border-radius: 12px;
+            padding: 10px 14px; align-items: center; justify-content: space-between; gap: 10px;
+            font-family: 'JetBrains Mono', monospace; font-size: 13px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+        }
+        .kc-live-chip.show { display: flex; }
+        .kc-live-chip b { color: var(--primary); }
+        @media (min-width: 1001px) { .kc-live-chip { display: none !important; } }
+
+        /* ---------- charts & blocks ---------- */
+        .kc-block { margin-top: 44px; }
+        .kc-chartgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        @media (max-width: 900px) { .kc-chartgrid { grid-template-columns: 1fr; } }
+        .kc-chartbox { height: 250px; }
+
+        .kc-tblwrap { overflow-x: auto; margin-top: 12px; }
+        table.kc-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        table.kc-table th {
+            text-align: left; font-size: 9.5px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-secondary);
+            padding: 9px 10px; border-bottom: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; white-space: nowrap;
+        }
+        table.kc-table td { padding: 10px; border-bottom: 1px solid #1c2128; font-family: 'JetBrains Mono', monospace; white-space: nowrap; vertical-align: middle; }
+        table.kc-table tr:hover td { background: rgba(88, 166, 255, 0.05); }
+        table.kc-table .kc-name { color: var(--text); font-family: 'Inter', sans-serif; font-size: 12.5px; max-width: 260px; white-space: normal; }
+        .kc-empty { color: var(--text-secondary); font-size: 12.5px; padding: 18px; text-align: center; border: 1px dashed var(--border); border-radius: 10px; }
+
+        /* ---------- explainer / definitions ---------- */
+        .def-item p { font-size: 12.5px; color: var(--text-secondary); margin: 6px 0 0; }
+        .def-item p strong { color: var(--text); }
+        .kc-eq {
+            font-family: 'JetBrains Mono', monospace; background: #0a0e14; border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px 14px; margin: 10px 0; color: var(--primary); font-size: 13px; overflow-x: auto;
+        }
+        .kc-step-learn { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+        .kc-step-learn:last-child { border-bottom: 0; }
+        .kc-step-learn .kc-n {
+            flex: 0 0 24px; height: 24px; width: 24px; border-radius: 50%; background: var(--surface-elevated);
+            color: var(--accent); display: flex; align-items: center; justify-content: center;
+            font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;
+        }
+        .kc-step-learn h4 { margin: 0 0 6px; font-size: 14px; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+        .kc-step-learn p { margin: 0 0 8px; font-size: 13px; color: var(--text-secondary); }
+        .kc-step-learn p:last-child { margin-bottom: 0; }
+
+        .kc-ex {
+            background: var(--sidebar); border: 1px solid var(--border); border-radius: 12px;
+            padding: 18px; margin-bottom: 16px;
+        }
+        .kc-ex h4 { margin: 0 0 6px; font-size: 15px; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+        .kc-ex .kc-exset { font-size: 13px; color: var(--text-secondary); margin: 0 0 12px; }
+        .kc-ex .kc-answer { background: rgba(46, 160, 67, 0.10); border-left: 3px solid var(--primary); border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 12px 0 0; font-size: 13px; }
+        .kc-ex .kc-lesson { font-size: 12px; color: var(--text-secondary); margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--border); }
+        .kc-ex .kc-lesson strong { color: var(--warning); }
+        .kc-tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.9px; text-transform: uppercase; color: var(--accent); border: 1px solid var(--border); border-radius: 100px; padding: 3px 9px; margin-bottom: 10px; }
+
+        @media (max-width: 700px) {
+            .kc-stats { grid-template-columns: 1fr; }
+            .def-grid { grid-template-columns: 1fr; }
+        }
+
+        .kc-exgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; margin-bottom: 20px; }
+        @media (max-width: 900px) { .kc-exgrid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -190,7 +411,8 @@
 
     <nav class="tabs">
         <a href="https://mikefromcornell.github.io/" class="tab-link hub-link">🚀 Projects</a>
-        <a href="#" class="tab-link active" id="tab-btn-play" onclick="switchTab('play', event)">🎮 Kelly's Game</a>
+        <a href="#" class="tab-link active" id="tab-btn-calc" onclick="switchTab('calc', event)">🧮 Kelly criterion calculator</a>
+        <a href="#" class="tab-link" id="tab-btn-play" onclick="switchTab('play', event)">🎮 Kelly's Game</a>
         <a href="#" class="tab-link" id="tab-btn-estimate" onclick="switchTab('estimate', event)">🎯 Estimation Drill</a>
         <a href="#" class="tab-link" id="tab-btn-conv" onclick="switchTab('conv', event)">🔄 Conversion</a>
         <a href="#" class="tab-link" id="tab-btn-cards" onclick="switchTab('cards', event)">🃏 Card Draw</a>
@@ -199,8 +421,8 @@
 
     <div class="container">
         <header>
-            <h1 id="page-title">KELLY'S GAME</h1>
-            <p id="page-subtitle" style="color: var(--text-secondary); margin-top: 10px;">Mathematically optimal betting</p>
+            <h1 id="page-title" class="kc-long">KELLY CRITERION CALCULATOR</h1>
+            <p id="page-subtitle" style="color: var(--text-secondary); margin-top: 10px;">Find your optimal bet size, step by step — every number explained</p>
         </header>
 
         <!-- PLAY TAB -->
@@ -307,6 +529,880 @@
                 <button class="btn btn-action" style="width:200px" onclick="resetGame()">Try Again</button>
             </div>
         </div>
+
+        <!-- ============================================================
+             KELLY CRITERION CALCULATOR TAB
+             ============================================================ -->
+        <div id="tab-calc" class="main-tab">
+
+            <section class="kc-intro" id="kc-top">
+                <p><strong>This calculator tells you how much of your bankroll to bet so your money grows as fast as possible in the long run.</strong> That bet size is called the <strong>Kelly criterion</strong>. Work through the five steps below — every number on the right updates the instant you change something, and each box explains in plain English what to type and why.</p>
+                <p class="kc-note">💚 <strong>100% free and private.</strong> There is no account, no server and no paid plan: all the maths runs in your browser, and your saved calculations are stored only on this device. No internet connection is needed after the page loads.</p>
+                <p style="margin-top:14px"><strong>New here, or just want to see it work?</strong> Tap an example — it fills the whole calculator in for you:</p>
+                <div class="kc-chips" style="margin-top:10px">
+                    <button class="kc-chip" onclick="kcLoadExample('even')">🪙 Coin lands heads 55% — paid even money</button>
+                    <button class="kc-chip" onclick="kcLoadExample('die6')">🎲 Roll a 6 — fair 6.00 payout (no edge)</button>
+                    <button class="kc-chip" onclick="kcLoadExample('die7')">🎲 Roll a 6 — paid 7.00</button>
+                    <button class="kc-chip" onclick="kcLoadExample('dog')">🏈 Underdog moneyline +150</button>
+                    <button class="kc-chip" onclick="kcLoadExample('fav')">🏈 Heavy favorite −200</button>
+                    <button class="kc-chip" onclick="kcLoadExample('horse')">🐎 Horse at 3/1</button>
+                    <button class="kc-chip" onclick="kcLoadExample('roulette')">🎡 Roulette single number (bad bet)</button>
+                </div>
+            </section>
+
+            <div class="kc-grid">
+                <!-- ================= LEFT: GUIDED INPUTS ================= -->
+                <div>
+
+                    <!-- STEP 1 -->
+                    <div class="kc-step">
+                        <div class="kc-step-head">
+                            <span class="kc-step-num">1</span>
+                            <div>
+                                <h3>What are you betting on?</h3>
+                                <p class="kc-help">Anything, as long as it pays out if you win and costs you your stake if you lose: a sports bet, a coin flip, a dice roll, a card, a prediction market, a trading position.</p>
+                            </div>
+                        </div>
+                        <label class="kc-label" for="kc-in-label">Name of the bet (optional — it just labels the row in your history)</label>
+                        <input class="kc-input" id="kc-in-label" type="text" maxlength="80" placeholder="e.g. Chiefs moneyline vs Bills" oninput="kcSet('label', this.value)">
+                        <p class="kc-help">This box does not change the maths at all. Give it a memorable name and you will be able to recognise it later in the <a href="#kc-history" style="color:var(--accent)">history table</a>.</p>
+                    </div>
+
+                    <!-- STEP 2 -->
+                    <div class="kc-step">
+                        <div class="kc-step-head">
+                            <span class="kc-step-num">2</span>
+                            <div>
+                                <h3>What payout are you getting? (the odds)</h3>
+                                <p class="kc-help">This is what the bet pays if it wins. Bookmakers show the same price in different formats — pick whichever one you have and the others are converted for you automatically.</p>
+                            </div>
+                        </div>
+
+                        <div class="kc-seg" id="kc-fmt-seg">
+                            <button type="button" class="active" data-fmt="decimal" onclick="kcSetFmt('decimal')">Decimal &nbsp;2.50</button>
+                            <button type="button" data-fmt="fractional" onclick="kcSetFmt('fractional')">Fractional &nbsp;3/2</button>
+                            <button type="button" data-fmt="american" onclick="kcSetFmt('american')">American &nbsp;+150 / −200</button>
+                            <button type="button" data-fmt="implied" onclick="kcSetFmt('implied')">Win chance % &nbsp;40%</button>
+                        </div>
+
+                        <div class="kc-fmtbox" id="kc-fmt-decimal">
+                            <label class="kc-label" for="kc-in-decimal">Decimal odds</label>
+                            <div class="kc-inline">
+                                <input class="kc-input kc-sm" id="kc-in-decimal" type="number" min="1.01" step="0.01" value="2.00" inputmode="decimal" oninput="kcSet('decimal', this.value, this)">
+                                <span class="kc-unit">= the total you get back per $1 staked (stake included)</span>
+                            </div>
+                            <p class="kc-help" style="margin-top:8px">At <strong>2.50</strong>, a $10 bet returns <strong>$25</strong> if it wins: <strong>$15 profit + your $10 stake back</strong>. Decimal odds are the standard in Europe and Australia and on exchanges such as Betfair.</p>
+                        </div>
+
+                        <div class="kc-fmtbox" id="kc-fmt-fractional" style="display:none">
+                            <label class="kc-label">Fractional odds — profit / stake</label>
+                            <div class="kc-inline">
+                                <input class="kc-input kc-xs" id="kc-in-fn" type="number" min="0" step="1" value="1" inputmode="numeric" oninput="kcSet('fracNum', this.value, this)"><span class="kc-unit">/</span><input class="kc-input kc-xs" id="kc-in-fd" type="number" min="1" step="1" value="1" inputmode="numeric" oninput="kcSet('fracDen', this.value, this)">
+                                <span class="kc-unit">= e.g. 3/1 means win $3 for every $1 staked</span>
+                            </div>
+                            <div class="kc-chips" style="margin-top:10px">
+                                <button class="kc-chip" onclick="kcSetFrac(1,2)">1/2</button>
+                                <button class="kc-chip" onclick="kcSetFrac(1,1)">1/1 (evens)</button>
+                                <button class="kc-chip" onclick="kcSetFrac(6,5)">6/5</button>
+                                <button class="kc-chip" onclick="kcSetFrac(3,2)">3/2</button>
+                                <button class="kc-chip" onclick="kcSetFrac(2,1)">2/1</button>
+                                <button class="kc-chip" onclick="kcSetFrac(3,1)">3/1</button>
+                                <button class="kc-chip" onclick="kcSetFrac(5,1)">5/1</button>
+                                <button class="kc-chip" onclick="kcSetFrac(10,1)">10/1</button>
+                            </div>
+                            <p class="kc-help" style="margin-top:10px">Fractional odds are the classic UK / Irish bookmaker format. They show <strong>profit only</strong>, so your stake comes back on top.</p>
+                        </div>
+
+                        <div class="kc-fmtbox" id="kc-fmt-american" style="display:none">
+                            <label class="kc-label" for="kc-in-american">American / moneyline odds</label>
+                            <div class="kc-inline">
+                                <input class="kc-input kc-sm" id="kc-in-american" type="text" value="+100" inputmode="text" oninput="kcSet('american', this.value, this)">
+                                <span class="kc-unit">include the + or − sign</span>
+                            </div>
+                            <p class="kc-help" style="margin-top:8px"><strong>Plus numbers (+150) are underdogs:</strong> a $100 bet wins $150. <strong>Minus numbers (−200) are favorites:</strong> you must bet $200 to win $100. Type either one and the decimal equivalent appears below.</p>
+                        </div>
+
+                        <div class="kc-fmtbox" id="kc-fmt-implied" style="display:none">
+                            <label class="kc-label" for="kc-in-implied">Win chance the price implies (%)</label>
+                            <div class="kc-inline">
+                                <input class="kc-input kc-sm" id="kc-in-implied" type="number" min="0.01" max="99.99" step="0.1" value="50" inputmode="decimal" oninput="kcSet('implied', this.value, this)">
+                                <span class="kc-unit">= the break-even win rate built into the odds</span>
+                            </div>
+                            <p class="kc-help" style="margin-top:8px">Turn a percentage straight into odds with <code class="kc-code">decimal odds = 100 ÷ %</code>. So 25% → 4.00 and 40% → 2.50. Use this when a market only quotes chances, or when you want to see what your own estimate converts to.</p>
+                        </div>
+
+                        <p class="kc-err" id="kc-odds-error" style="display:none"></p>
+
+                        <div class="kc-strip">
+                            <div class="kc-tile"><span>Decimal odds</span><b id="kc-o-decimal">2.00</b></div>
+                            <div class="kc-tile"><span>Fractional</span><b id="kc-o-frac">1/1</b></div>
+                            <div class="kc-tile"><span>American</span><b id="kc-o-amer">+100</b></div>
+                            <div class="kc-tile"><span>Break-even win rate</span><b id="kc-o-implied">50.0%</b></div>
+                            <div class="kc-tile"><span>Profit per $1 staked (b)</span><b id="kc-o-b">1.00</b></div>
+                            <div class="kc-tile"><span>A $100 stake returns</span><b id="kc-o-100">$200.00</b></div>
+                        </div>
+                        <p class="kc-help" style="margin-top:10px">The <strong>break-even win rate</strong> is the chance you must win just to end up level: <code class="kc-code">1 ÷ decimal odds</code>. If you win less often than this, the bet loses money over time no matter how you size it.</p>
+                    </div>
+
+                    <!-- STEP 3 -->
+                    <div class="kc-step">
+                        <div class="kc-step-head">
+                            <span class="kc-step-num">3</span>
+                            <div>
+                                <h3>What do you think the real chance of winning is?</h3>
+                                <p class="kc-help"><strong>This is the hardest and most important number in the whole calculation.</strong> Not what the bookmaker says — <em>your</em> honest best estimate of the true probability.</p>
+                            </div>
+                        </div>
+
+                        <div class="kc-inline" style="justify-content:space-between">
+                            <label class="kc-label" for="kc-in-p" style="margin:0">Your estimated win chance</label>
+                            <div class="kc-inline" style="gap:6px">
+                                <input class="kc-input kc-xs" id="kc-in-p" type="number" min="0" max="100" step="0.5" value="55" inputmode="decimal" oninput="kcSet('p', this.value, this)">
+                                <span class="kc-unit">%</span>
+                            </div>
+                        </div>
+                        <input class="kc-slider" id="kc-sl-p" type="range" min="0" max="100" step="0.5" value="55" oninput="kcSet('p', this.value, this)">
+                        <div class="kc-scale"><span>0% — impossible</span><span>50% — coin flip</span><span>100% — certain</span></div>
+
+                        <div class="kc-probwrap">
+                            <div class="kc-probbar">
+                                <div class="kc-probfill" id="kc-probfill" style="width:0%"></div>
+                                <div class="kc-pin kc-pin-implied" id="kc-pin-implied" style="left:0%"></div>
+                                <div class="kc-pin kc-pin-you" id="kc-pin-you" style="left:0%"></div>
+                            </div>
+                            <div class="kc-pinlabel kc-lbl-implied" id="kc-lbl-implied" style="left:0%">bookmaker needs 50.0%</div>
+                            <div class="kc-pinlabel kc-lbl-you" id="kc-lbl-you" style="left:0%">you say 55.0%</div>
+                        </div>
+
+                        <div class="kc-strip">
+                            <div class="kc-tile"><span>Your edge (value)</span><b id="kc-o-edge">+10.0%</b></div>
+                            <div class="kc-tile"><span>Profit per $100 staked</span><b id="kc-o-ev100">+$10.00</b></div>
+                            <div class="kc-tile"><span>Implied vs your chance</span><b id="kc-o-gap">+5.0 pts</b></div>
+                        </div>
+
+                        <p class="kc-help" id="kc-edge-sentence" style="margin-top:12px"></p>
+
+                        <details style="margin-top:14px">
+                            <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-family:'JetBrains Mono',monospace">Stuck on this number? Use the market's own odds with the bookmaker margin removed ▾</summary>
+                            <div style="padding-top:12px">
+                                <p class="kc-help">Bookmakers build a profit margin (the &ldquo;vig&rdquo;) into every price, so both sides of a market add up to more than 100%. Enter the other side of the market below and we will strip that margin out to give a fair starting point. Then adjust up or down only if you have a real reason.</p>
+                                <div class="kc-inline" style="margin-top:10px">
+                                    <label class="kc-label" for="kc-in-other" style="margin:0">Other side's decimal odds</label>
+                                    <input class="kc-input kc-xs" id="kc-in-other" type="number" min="1.01" step="0.01" value="1.80" inputmode="decimal" oninput="kcUpdate()">
+                                    <button class="kc-btn kc-btn-ghost kc-btn-sm" type="button" onclick="kcUseFair()">Use fair chance</button>
+                                </div>
+                                <div class="kc-strip">
+                                    <div class="kc-tile"><span>Total implied (both sides)</span><b id="kc-vig-total">105.6%</b></div>
+                                    <div class="kc-tile"><span>Bookmaker margin</span><b id="kc-vig-margin">5.6%</b></div>
+                                    <div class="kc-tile"><span>Fair decimal odds</span><b id="kc-vig-fair">2.11</b></div>
+                                    <div class="kc-tile"><span>Fair win chance</span><b id="kc-vig-fairp">47.4%</b></div>
+                                </div>
+                            </div>
+                        </details>
+
+                        <p class="kc-help" style="margin-top:12px">Advanced (rarely needed): <label for="kc-in-push" style="color:var(--accent);cursor:pointer">chance of a push / tie / void</label> — <input class="kc-input kc-xs" id="kc-in-push" type="number" min="0" max="99" step="0.5" value="0" inputmode="decimal" oninput="kcSet('push', this.value, this)" style="display:inline-block;padding:4px 6px;font-size:12px"> %. On a push nothing changes hands, so it lowers both your win and loss chances and shrinks the recommended stake.</p>
+                    </div>
+
+                    <!-- STEP 4 -->
+                    <div class="kc-step">
+                        <div class="kc-step-head">
+                            <span class="kc-step-num">4</span>
+                            <div>
+                                <h3>How much money can you bet with? (your bankroll)</h3>
+                                <p class="kc-help">The total pot of money you have set aside for betting. The recommendation is a <em>percentage</em> of this pot, so the answer scales automatically.</p>
+                            </div>
+                        </div>
+                        <label class="kc-label" for="kc-in-bankroll">Bankroll</label>
+                        <div class="kc-inline">
+                            <input class="kc-input kc-sm" id="kc-in-bankroll" type="number" min="0" step="10" value="1000" inputmode="decimal" oninput="kcSet('bankroll', this.value, this)">
+                            <span class="kc-unit" id="kc-o-bankroll-unit">$1,000.00</span>
+                        </div>
+                        <div class="kc-chips" style="margin-top:10px">
+                            <button class="kc-chip" onclick="kcSet('bankroll', 100, document.getElementById('kc-in-bankroll'))">$100</button>
+                            <button class="kc-chip" onclick="kcSet('bankroll', 500, document.getElementById('kc-in-bankroll'))">$500</button>
+                            <button class="kc-chip" onclick="kcSet('bankroll', 1000, document.getElementById('kc-in-bankroll'))">$1,000</button>
+                            <button class="kc-chip" onclick="kcSet('bankroll', 5000, document.getElementById('kc-in-bankroll'))">$5,000</button>
+                            <button class="kc-chip" onclick="kcSet('bankroll', 10000, document.getElementById('kc-in-bankroll'))">$10,000</button>
+                            <button class="kc-chip" onclick="kcSet('bankroll', 100000, document.getElementById('kc-in-bankroll'))">$100,000</button>
+                        </div>
+                        <p class="kc-help" style="margin-top:10px">Only include money you could genuinely afford to lose and still be fine — this is money at risk, not your rent. If you keep topping up after losses, the % rule stops protecting you.</p>
+                    </div>
+
+                    <!-- STEP 5 -->
+                    <div class="kc-step">
+                        <div class="kc-step-head">
+                            <span class="kc-step-num">5</span>
+                            <div>
+                                <h3>How aggressive do you want to be?</h3>
+                                <p class="kc-help">Full Kelly grows your bankroll fastest, but it is a wild ride. Most professionals deliberately bet a fraction of it (half Kelly is the most popular choice) to keep the dips comfortable.</p>
+                            </div>
+                        </div>
+                        <div class="kc-seg" id="kc-mult-seg">
+                            <button type="button" class="active" data-mult="100" onclick="kcSetMult(100)">Full Kelly — 100%</button>
+                            <button type="button" data-mult="75" onclick="kcSetMult(75)">¾ Kelly — 75%</button>
+                            <button type="button" data-mult="50" onclick="kcSetMult(50)">Half Kelly — 50%</button>
+                            <button type="button" data-mult="25" onclick="kcSetMult(25)">Quarter Kelly — 25%</button>
+                        </div>
+                        <div class="kc-inline" style="justify-content:space-between">
+                            <label class="kc-label" for="kc-in-mult" style="margin:0">Or set it yourself (share of full Kelly)</label>
+                            <div class="kc-inline" style="gap:6px">
+                                <input class="kc-input kc-xs" id="kc-in-mult" type="number" min="1" max="200" step="5" value="100" inputmode="numeric" oninput="kcSet('mult', this.value, this)">
+                                <span class="kc-unit">%</span>
+                            </div>
+                        </div>
+                        <input class="kc-slider" id="kc-sl-mult" type="range" min="5" max="200" step="5" value="100" oninput="kcSet('mult', this.value, this)">
+                        <div class="kc-scale"><span>5% — very cautious</span><span>100% — full Kelly</span><span>200% — reckless</span></div>
+                        <div class="kc-strip">
+                            <div class="kc-tile"><span>Growth you keep</span><b id="kc-o-growthkeep">100%</b></div>
+                            <div class="kc-tile"><span>Swing size vs full Kelly</span><b id="kc-o-swing">100%</b></div>
+                            <div class="kc-tile"><span>Stake vs full Kelly</span><b id="kc-o-stakecmp">same</b></div>
+                        </div>
+                        <p class="kc-help" id="kc-mult-sentence" style="margin-top:10px"></p>
+
+                        <details style="margin-top:14px">
+                            <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-family:'JetBrains Mono',monospace">Optional safety cap ▾</summary>
+                            <div class="kc-inline" style="padding-top:12px">
+                                <label class="kc-label" for="kc-in-cap" style="margin:0">Never stake more than this share of my bankroll</label>
+                                <input class="kc-input kc-xs" id="kc-in-cap" type="number" min="0" max="100" step="1" value="0" inputmode="decimal" oninput="kcSet('cap', this.value, this)">
+                                <span class="kc-unit">% &nbsp;(0 = no cap)</span>
+                            </div>
+                            <p class="kc-help" style="margin-top:8px">On short odds Kelly sometimes asks for a stake that feels enormous (see the −200 favorite example). A cap such as 5% or 10% keeps the stake inside your comfort zone. It is mathematically second-best, but a bet you can sleep through is worth more than a perfect one you abandon.</p>
+                        </details>
+                    </div>
+
+                    <p class="kc-help" style="margin-top:4px">Next: <button class="kc-btn kc-btn-ghost kc-btn-sm" type="button" onclick="kcScrollTo('kc-charts-block')">see the charts ▾</button> <button class="kc-btn kc-btn-ghost kc-btn-sm" type="button" onclick="kcScrollTo('kc-history-block')">history ▾</button> <button class="kc-btn kc-btn-ghost kc-btn-sm" type="button" onclick="kcScrollTo('kc-explainer')">explainer &amp; definitions ▾</button> <button class="kc-btn kc-btn-ghost kc-btn-sm" type="button" onclick="kcScrollTo('kc-examples')">examples ▾</button></p>
+                </div>
+
+                <!-- ================= RIGHT: LIVE RESULT ================= -->
+                <div class="kc-result">
+                    <div class="kc-result-card" id="kc-result-card">
+                        <div class="kc-kicker">Your optimal bet</div>
+                        <div class="kc-big" id="kc-out-stake">$100.00</div>
+                        <div class="kc-big-sub" id="kc-out-pct">10.00% of your $1,000.00 bankroll</div>
+                        <div class="kc-badges" id="kc-out-badges"></div>
+
+                        <div class="kc-stats">
+                            <div class="kc-stat"><span>Full Kelly (the ideal %)</span><b id="kc-out-fstar">10.00%</b></div>
+                            <div class="kc-stat"><span>Your bet as % of bankroll</span><b id="kc-out-f">10.00%</b></div>
+                            <div class="kc-stat"><span>Edge per $1 staked</span><b id="kc-out-edge">+10.00%</b></div>
+                            <div class="kc-stat"><span>Expected value of this bet</span><b id="kc-out-ev">+$10.00</b></div>
+                            <div class="kc-stat"><span>Long-run growth per bet</span><b id="kc-out-growth">+0.501%</b></div>
+                            <div class="kc-stat"><span>Bankroll doubles in about</span><b id="kc-out-double">139 bets</b></div>
+                            <div class="kc-stat"><span>Chance of profit after 100 bets</span><b id="kc-out-profit">—</b></div>
+                            <div class="kc-stat"><span>Typical result after 100 bets</span><b id="kc-out-median">—</b></div>
+                            <div class="kc-stat"><span>Chance of ever dropping to half</span><b id="kc-out-halfrisk">—</b></div>
+                            <div class="kc-stat"><span>Bad-luck case (1 in 10)</span><b id="kc-out-p10">—</b></div>
+                        </div>
+
+                        <div class="kc-formula" id="kc-formula"></div>
+                        <div class="kc-warn" id="kc-warning"></div>
+
+                        <div class="kc-btnrow">
+                            <button class="kc-btn kc-btn-primary" type="button" id="kc-save-btn" onclick="kcSaveEntry()">💾 Save to history</button>
+                            <button class="kc-btn kc-btn-ghost" type="button" onclick="kcReset()">↺ Reset</button>
+                        </div>
+                        <p class="kc-help" style="margin-top:10px">Saving adds this calculation to the <a href="#kc-history" style="color:var(--accent)">history table below</a> so you can compare and reload it later. Nothing leaves your device.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kc-live-chip" id="kc-live-chip">
+                <span>Optimal bet</span>
+                <b id="kc-chip-val">$100.00 · 10.0%</b>
+            </div>
+
+            <!-- ================= CHARTS ================= -->
+            <section class="kc-block" id="kc-charts-block">
+                <h2>See it: why this is the best bet size</h2>
+                <div class="kc-chartgrid">
+                    <div class="card" style="margin-bottom:0">
+                        <div class="kc-kicker" style="color:var(--accent)">Chart 1 — Expected growth vs bet size</div>
+                        <p class="kc-help" style="margin:6px 0 10px">Each point answers: &ldquo;if I bet <em>this</em> percentage of my bankroll every time, how fast does my money grow per bet?&rdquo; The curve peaks exactly at Kelly. <strong>Bet less and you grow slower; bet more and you grow slower too</strong> — past a point you go backwards.</p>
+                        <div class="kc-chartbox"><canvas id="kcCurveChart"></canvas></div>
+                        <p class="kc-help" style="margin-top:10px" id="kc-curve-note"></p>
+                    </div>
+                    <div class="kc-chartgrid" style="grid-template-columns:1fr; gap:0">
+                        <div class="card" style="margin-bottom:0">
+                            <div class="kc-kicker" style="color:var(--accent)">Chart 2 — 100 simulated bets at your chosen size</div>
+                            <p class="kc-help" style="margin:6px 0 10px">400 pretend runs of the next 100 bets, using your numbers. The solid line is the middle outcome, the shaded band covers the middle 80% of outcomes. This is what &ldquo;volatility&rdquo; actually looks like.</p>
+                            <div class="kc-chartbox"><canvas id="kcSimChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= HISTORY ================= -->
+            <section class="kc-block" id="kc-history-block">
+                <h2>Your previous calculations</h2>
+                <div class="card">
+                    <p class="kc-help" style="margin-bottom:14px">Every calculation you save is listed here, newest first. Press <strong>Load</strong> to put all of its numbers back into the calculator, <strong>Delete</strong> to remove one row, or <strong>Export CSV</strong> to keep a backup in a spreadsheet. Saved in this browser only (localStorage) — free, private, and no account.</p>
+                    <div class="kc-inline" style="margin-bottom:14px">
+                        <button class="kc-btn kc-btn-ghost kc-btn-sm" type="button" onclick="kcExportCsv()">⬇ Export CSV</button>
+                        <button class="kc-btn kc-btn-danger kc-btn-sm" type="button" onclick="kcClearHistory()">🗑 Clear all</button>
+                        <span class="kc-help" id="kc-hist-count">0 saved calculations</span>
+                    </div>
+                    <div id="kc-hist-note" class="kc-warn info" style="margin-top:0;display:none"></div>
+                    <div class="kc-tblwrap" id="kc-hist-wrap"></div>
+                </div>
+            </section>
+
+            <!-- ================= EXPLAINER ================= -->
+            <section class="kc-block" id="kc-explainer">
+                <h2>The explainer: what Kelly actually does</h2>
+                <div class="card">
+                    <p style="margin-top:0"><strong>One sentence version:</strong> Kelly says bet the share of your bankroll that equals <em>your edge divided by the odds</em>. If your edge is bigger, bet more. If the odds pay less per dollar, bet less. If you have no edge at all, bet nothing.</p>
+
+                    <div class="kc-step-learn">
+                        <span class="kc-n">1</span>
+                        <div>
+                            <h4>Your bankroll is a pot that gets multiplied, bet after bet</h4>
+                            <p>If you stake the fraction <code class="kc-code">f</code> of your bankroll and win, your pot is multiplied by <code class="kc-code">1 + f × b</code> (you keep the stake and add the profit). If you lose, it is multiplied by <code class="kc-code">1 − f</code> (the stake is gone).</p>
+                            <p>So a $1,000 bankroll with a 10% stake on 2.00 odds becomes <strong>$1,100</strong> after a win and <strong>$900</strong> after a loss. Long-term results depend on the order and mix of those wins and losses — and on your choice of <code class="kc-code">f</code>.</p>
+                        </div>
+                    </div>
+
+                    <div class="kc-step-learn">
+                        <span class="kc-n">2</span>
+                        <div>
+                            <h4>Compounding means you should maximise the <em>average growth rate</em>, not the average profit</h4>
+                            <p>Betting too small wastes good opportunities. Betting too big is worse: a 50% loss needs a 100% gain just to get back to where you were. Kelly chooses the stake that makes your bankroll grow fastest <em>compounded over many bets</em>, which is the same thing as maximising the average of <code class="kc-code">log(bankroll)</code>.</p>
+                            <p>That is why the growth curve in Chart 1 above has a peak instead of rising forever: past Kelly, extra stake adds risk faster than it adds return, and eventually drags your growth rate down to zero and then negative.</p>
+                        </div>
+                    </div>
+
+                    <div class="kc-step-learn">
+                        <span class="kc-n">3</span>
+                        <div>
+                            <h4>The two building blocks: your edge and the odds</h4>
+                            <div class="kc-eq">edge = (chance you win × profit per $1) − (chance you lose)</div>
+                            <div class="kc-eq">Kelly stake % = edge ÷ profit per $1</div>
+                            <p><strong>Edge</strong> is your expected profit per $1 staked, expressed as a decimal. An edge of <code class="kc-code">0.10</code> means +10% on average for every dollar you risk: stake $1,000 across many identical bets and you expect roughly +$100.</p>
+                            <p><strong>Profit per $1</strong> is the bookmaker's b (also written <code class="kc-code">b</code>, "net odds" or "b to 1"). At decimal odds of 2.50 you win $1.50 per $1 staked, so <code class="kc-code">b = 1.50</code>.</p>
+                        </div>
+                    </div>
+
+                    <div class="kc-step-learn">
+                        <span class="kc-n">4</span>
+                        <div>
+                            <h4>The same formula written in each format</h4>
+                            <div class="kc-eq">f* = (p × b − q) ÷ b&nbsp;&nbsp;&nbsp;&nbsp;where b = decimal odds − 1, p = your win chance, q = 1 − p</div>
+                            <div class="kc-eq">f* = p − q ÷ b&nbsp;&nbsp;&nbsp;&nbsp;(identical, just rearranged)</div>
+                            <div class="kc-eq">f* = (p × decimal − 1) ÷ (decimal − 1)</div>
+                            <div class="kc-eq">f* = p − (1 − p) ÷ (decimal − 1) = the form this calculator uses</div>
+                            <p>All four are the same equation. Many sports bettors find the last one easiest: &ldquo;my win chance minus the break-even chance, divided by the profit per dollar.&rdquo;</p>
+                        </div>
+                    </div>
+
+                    <div class="kc-step-learn">
+                        <span class="kc-n">5</span>
+                        <div>
+                            <h4>Why the answer is a percentage, not a dollar amount</h4>
+                            <p>Because your bankroll changes after every bet, and the correct stake changes with it. Kelly is a rule you re-apply, not a one-off decision: after a win your next stake gets bigger, after a loss it gets smaller. That automatic shrinking is what stops a bad run from destroying you.</p>
+                            <p>This calculator multiplies the percentage by the bankroll you entered so you have an actual stake to place, but the percentage is the real answer.</p>
+                        </div>
+                    </div>
+
+                    <div class="kc-step-learn">
+                        <span class="kc-n">6</span>
+                        <div>
+                            <h4>Never bet without an edge</h4>
+                            <p>If <code class="kc-code">p × b</code> is less than <code class="kc-code">q</code>, the formula returns a negative number. There is no optimal stake — the only winning move is not to play, so Kelly says <strong>0%</strong>. This is why the calculator refuses to give you a bet when your win chance is below the break-even rate.</p>
+                            <p>Remember that bookmakers charge a margin, so most bets are negative before you even start. Kelly only recommends a stake when <em>your</em> estimate says the price is too generous.</p>
+                        </div>
+                    </div>
+
+                    <div class="kc-step-learn">
+                        <span class="kc-n">7</span>
+                        <div>
+                            <h4>Measuring the reward: expected growth per bet</h4>
+                            <div class="kc-eq">growth per bet = p × ln(1 + f × b) + q × ln(1 − f)</div>
+                            <p>This is the number under &ldquo;long-run growth per bet&rdquo; in the result panel. A growth rate of 0.5% per bet means your bankroll multiplies by roughly <code class="kc-code">1.005</code> per bet on average — about 139 bets to double. It is the honest, compounding measure of how good a bet is, and the calculator uses it to tell you how much of Kelly's growth you keep at your chosen aggression level.</p>
+                        </div>
+                    </div>
+
+                    <div class="kc-step-learn">
+                        <span class="kc-n">8</span>
+                        <div>
+                            <h4>Half Kelly and friends: buying peace of mind</h4>
+                            <p>Betting a fixed share <code class="kc-code">λ</code> of full Kelly (for example λ = 0.5) gives up a little growth and takes away a lot of risk. For small edges the growth you keep is roughly <code class="kc-code">2λ − λ²</code>: half Kelly keeps about 75% of the growth while halving the swings, and quarter Kelly keeps about 44% with a quarter of the swings.</p>
+                            <p>Risk of a bad drawdown falls even faster. A rough but useful rule: with full Kelly the chance your bankroll is <em>ever</em> cut to a fraction x of its starting value is about x — so roughly a 1-in-2 chance of hitting half at some point, 1-in-4 at half Kelly. The <em>real</em> figures for your exact numbers are simulated live in the result panel.</p>
+                        </div>
+                    </div>
+
+                    <div class="kc-eq" style="margin-top:18px; font-size:14px; color:var(--primary)">Kelly stake % = (chance of winning × profit per $1 − chance of losing) ÷ profit per $1&nbsp;&nbsp;=&nbsp;&nbsp;(edge) ÷ (profit per $1)</div>
+
+                    <p class="kc-help" style="font-size:11.5px">Background: the formula comes from John L. Kelly Jr., a researcher at Bell Labs, in his 1956 paper &ldquo;A New Interpretation of Information Rate&rdquo;. Ed Thorp later popularised it for blackjack and markets. It is standard, published mathematics — nothing here is proprietary or paywalled.</p>
+                </div>
+            </section>
+
+            <!-- ================= HOW TO WORK OUT THE NUMBERS ================= -->
+            <section class="kc-block" id="kc-odds">
+                <h2>How to work out each number (the very basics)</h2>
+
+                <div class="card">
+                    <h2 style="font-size:18px">A. Decimal odds, explained from scratch</h2>
+                    <p style="margin-top:0">Decimal odds (also called European or &ldquo;digital&rdquo; odds) answer one question: <strong>how much do I get back for every $1 I stake, stake included?</strong></p>
+                    <div class="kc-eq">profit = stake × (decimal odds − 1)&nbsp;&nbsp;&nbsp;&nbsp;total returned = stake × decimal odds</div>
+                    <ul style="font-size:13px; color:var(--text-secondary); padding-left:20px">
+                        <li><strong>1.50</strong> → stake $100, win $50, get back $150.</li>
+                        <li><strong>2.00</strong> → stake $100, win $100, get back $200 (evens).</li>
+                        <li><strong>4.00</strong> → stake $100, win $300, get back $400 (3/1).</li>
+                    </ul>
+                    <p><strong>Decimal odds are always 1.00 or more.</strong> They can never be below 1, because you always at least get your own stake back — a stake of $100 at 1.01 returns $101 for a $1 profit.</p>
+
+                    <h3 style="font-size:15px; color:var(--accent); margin-top:22px">Six ways people find the decimal odds</h3>
+                    <div class="kc-tblwrap">
+                        <table class="kc-table">
+                            <thead><tr><th>You have</th><th>The recipe</th><th>Worked example</th></tr></thead>
+                            <tbody>
+                                <tr><td class="kc-name">Fractional odds (3/1)</td><td>1 + (top ÷ bottom)</td><td>1 + (3 ÷ 1) = <strong>4.00</strong></td></tr>
+                                <tr><td class="kc-name">A &ldquo;to 1&rdquo; payout statement (&ldquo;4 to 1&rdquo;)</td><td>1 + the number</td><td>1 + 4 = <strong>5.00</strong></td></tr>
+                                <tr><td class="kc-name">American odds, positive (+150)</td><td>1 + (number ÷ 100)</td><td>1 + 1.5 = <strong>2.50</strong></td></tr>
+                                <tr><td class="kc-name">American odds, negative (−200)</td><td>1 + (100 ÷ number without the sign)</td><td>1 + (100 ÷ 200) = <strong>1.50</strong></td></tr>
+                                <tr><td class="kc-name">A win probability in % (25%)</td><td>100 ÷ percentage</td><td>100 ÷ 25 = <strong>4.00</strong></td></tr>
+                                <tr><td class="kc-name">A real payout you were offered</td><td>total returned ÷ stake</td><td>$37.50 returned on a $10 stake = <strong>3.75</strong></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 style="font-size:15px; color:var(--accent); margin-top:24px">Converting the other way</h3>
+                    <div class="kc-tblwrap">
+                        <table class="kc-table">
+                            <thead><tr><th>Going from decimal odds to&hellip;</th><th>The recipe</th><th>Example (2.50)</th></tr></thead>
+                            <tbody>
+                                <tr><td class="kc-name">Break-even win rate</td><td>100 ÷ decimal</td><td>100 ÷ 2.50 = <strong>40.0%</strong></td></tr>
+                                <tr><td class="kc-name">Profit per $1 (b)</td><td>decimal − 1</td><td>2.50 − 1 = <strong>1.50</strong></td></tr>
+                                <tr><td class="kc-name">Fractional odds</td><td>(decimal − 1) ÷ 1, reduce the fraction</td><td>1.5&nbsp;=&nbsp;<strong>3/2</strong></td></tr>
+                                <tr><td class="kc-name">American odds (if decimal ≥ 2)</td><td>+(decimal − 1) × 100</td><td>1.5 × 100 = <strong>+150</strong></td></tr>
+                                <tr><td class="kc-name">American odds (if decimal &lt; 2)</td><td>−100 ÷ (decimal − 1)</td><td>−100 ÷ 1.5 = <strong>−66.7</strong> ≈ −67</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 style="font-size:15px; color:var(--accent); margin-top:24px">Common odds you will see everywhere</h3>
+                    <div class="kc-tblwrap">
+                        <table class="kc-table">
+                            <thead><tr><th>Fractional</th><th>Decimal</th><th>American</th><th>Break-even win rate</th><th>$100 bet returns</th></tr></thead>
+                            <tbody>
+                                <tr><td>1/2</td><td>1.50</td><td>−200</td><td>66.7%</td><td>$150</td></tr>
+                                <tr><td>4/5</td><td>1.80</td><td>−125</td><td>55.6%</td><td>$180</td></tr>
+                                <tr><td>10/11</td><td>1.91</td><td>−110</td><td>52.4%</td><td>$191</td></tr>
+                                <tr><td>1/1</td><td>2.00</td><td>+100</td><td>50.0%</td><td>$200</td></tr>
+                                <tr><td>6/5</td><td>2.20</td><td>+120</td><td>45.5%</td><td>$220</td></tr>
+                                <tr><td>3/2</td><td>2.50</td><td>+150</td><td>40.0%</td><td>$250</td></tr>
+                                <tr><td>2/1</td><td>3.00</td><td>+200</td><td>33.3%</td><td>$300</td></tr>
+                                <tr><td>5/2</td><td>3.50</td><td>+250</td><td>28.6%</td><td>$350</td></tr>
+                                <tr><td>3/1</td><td>4.00</td><td>+300</td><td>25.0%</td><td>$400</td></tr>
+                                <tr><td>5/1</td><td>6.00</td><td>+500</td><td>16.7%</td><td>$600</td></tr>
+                                <tr><td>10/1</td><td>11.00</td><td>+1000</td><td>9.1%</td><td>$1,100</td></tr>
+                                <tr><td>20/1</td><td>21.00</td><td>+2000</td><td>4.8%</td><td>$2,100</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="kc-help" style="margin-top:12px">The −110 line ($1.91) is the classic American sportsbook price: you must bet $110 to win $100.</p>
+                </div>
+
+                <div class="card">
+                    <h2 style="font-size:18px">B. How to get the true probability (p) — by counting</h2>
+                    <p style="margin-top:0">When the event is a physical object you can literally count the ways it can happen. This is the gold standard, because the answer is exact and not an opinion:</p>
+                    <div class="kc-eq">probability = (ways you win) ÷ (total equally likely outcomes)</div>
+                    <div class="kc-tblwrap">
+                        <table class="kc-table">
+                            <thead><tr><th>Situation</th><th>The count</th><th>Probability</th><th>Fair decimal odds</th></tr></thead>
+                            <tbody>
+                                <tr><td class="kc-name">Coin lands heads</td><td>1 way out of 2 sides</td><td>1/2 = <strong>50.0%</strong></td><td>2.00</td></tr>
+                                <tr><td class="kc-name">One specific face on a fair die</td><td>1 way out of 6 faces</td><td>1/6 = <strong>16.7%</strong></td><td>6.00</td></tr>
+                                <tr><td class="kc-name">Rolling a 7 with two dice</td><td>6 combinations out of 36</td><td>6/36 = <strong>16.7%</strong></td><td>6.00</td></tr>
+                                <tr><td class="kc-name">Rolling a 4 or higher with two dice</td><td>33 combinations out of 36</td><td>33/36 = <strong>91.7%</strong></td><td>1.09</td></tr>
+                                <tr><td class="kc-name">Drawing an ace from a full deck</td><td>4 aces out of 52 cards</td><td>4/52 = <strong>7.7%</strong></td><td>13.00</td></tr>
+                                <tr><td class="kc-name">A named card (e.g. the 7 of hearts)</td><td>1 card out of 52</td><td>1/52 = <strong>1.9%</strong></td><td>52.00</td></tr>
+                                <tr><td class="kc-name">European roulette, one number</td><td>1 pocket out of 37</td><td>1/37 = <strong>2.70%</strong></td><td>37.00</td></tr>
+                                <tr><td class="kc-name">American roulette, one number</td><td>1 pocket out of 38</td><td>1/38 = <strong>2.63%</strong></td><td>38.00</td></tr>
+                                <tr><td class="kc-name">A coin that lands heads 60% of the time</td><td>measured over many flips</td><td><strong>60%</strong></td><td>1.67</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="kc-help" style="margin-top:12px">A casino game pays out on the <em>fair</em> odds minus a slice, which is why the number of pockets matters so much: European roulette pays a single number as if there were 36 pockets (35 to 1, decimal 36.00) when there are really 37, and American roulette pays the same while having 38. That is the entire house edge, and it is why the calculator tells you not to bet.</p>
+
+                    <h3 style="font-size:15px; color:var(--accent); margin-top:22px">When you cannot count: sports, politics, weather</h3>
+                    <p>For real-world events there are no equally likely outcomes to count, so <code class="kc-code">p</code> is a judgement. Sensible ways to get a defensible number:</p>
+                    <ol style="font-size:13px; color:var(--text-secondary); padding-left:20px; line-height:1.75">
+                        <li><strong>Start with the market's fair chance.</strong> Enter both sides' odds in the step-3 helper, remove the bookmaker's margin, and use that as your baseline.</li>
+                        <li><strong>Only move it if you have a reason the market has missed:</strong> an injury the price has not absorbed, better data, a specialist model, a rule you understand better.</li>
+                        <li><strong>Be humble about the size of your adjustment.</strong> Moving a price by more than 2–5 percentage points is claiming a big edge over professionals. If your model disagrees wildly, suspect your model first.</li>
+                        <li><strong>Write the reason down and count your results.</strong> If you are wrong more often than you thought, the mistake is in <code class="kc-code">p</code>, not in Kelly.</li>
+                    </ol>
+                </div>
+
+                <div class="card">
+                    <h2 style="font-size:18px">C. Sanity checks before you place the bet</h2>
+                    <div class="kc-step-learn" style="padding-top:0">
+                        <span class="kc-n">1</span>
+                        <div>
+                            <h4>Is my chance bigger than the break-even rate?</h4>
+                            <p>If <code class="kc-code">p</code> is below <code class="kc-code">1 ÷ decimal odds</code>, there is no bet. The calculator shows &ldquo;no bet&rdquo; automatically in that case.</p>
+                        </div>
+                    </div>
+                    <div class="kc-step-learn">
+                        <span class="kc-n">2</span>
+                        <div>
+                            <h4>Does the stake feel absurd?</h4>
+                            <p>If Kelly asks for 25% of your bankroll, ask yourself whether a 25%-plus claim over a professional market is really justified. Very large fractions are usually a sign that <code class="kc-code">p</code> is too optimistic, not that you have found a goldmine.</p>
+                        </div>
+                    </div>
+                    <div class="kc-step-learn">
+                        <span class="kc-n">3</span>
+                        <div>
+                            <h4>Can you survive a losing streak?</h4>
+                            <p>At a 10% stake, five losses in a row is a 41% drawdown — and five losses in a row happens to <em>everyone</em> eventually. If that thought makes you panic, lower your fraction of Kelly or set a cap.</p>
+                        </div>
+                    </div>
+                    <div class="kc-step-learn">
+                        <span class="kc-n">4</span>
+                        <div>
+                            <h4>Can you actually get the bet on at that size and price?</h4>
+                            <p>A great number on paper is worthless if the stake is limited or the price moves. If the odds shorten before you get on, come back and recalculate — do not just carry on at the old stake.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= DEFINITIONS ================= -->
+            <section class="kc-block" id="kc-definitions">
+                <h2>Definitions: every number in the calculator</h2>
+                <div class="card">
+                    <div class="def-grid">
+                        <div class="def-item">
+                            <div class="def-name">b — profit per $1 staked</div>
+                            <div class="def-tech">b = decimal odds − 1</div>
+                            <p>The reward for a win. At decimal 2.50 you win $1.50 per $1 staked, so <strong>b = 1.50</strong>. At 6.00, b = 5.00 ("5 to 1").</p>
+                            <p><strong>How to get it:</strong> subtract 1 from the decimal odds. If decimal is 4.00 then b = 3.00.</p>
+                            <div class="def-examples">Examples: 1.91 → 0.91 &nbsp;|&nbsp; 2.00 → 1.00 &nbsp;|&nbsp; 11.00 → 10.00
+                                <ul><li>If b is small, even a good edge asks for a big stake — the maths is telling you the payout is thin.</li></ul>
+                            </div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">p — your chance of winning</div>
+                            <div class="def-tech">a number between 0 and 1 (or 0–100%)</div>
+                            <p>Your honest estimate of the true probability that the bet wins. It is the input that decides everything, and the one most often got wrong.</p>
+                            <p><strong>How to get it:</strong> count outcomes when you can (1/6 for a die face, 4/52 for an ace); otherwise start from the market's margin-free price and nudge it only with a real reason.</p>
+                            <div class="def-examples">Examples: coin 50% &nbsp;|&nbsp; die face 16.7% &nbsp;|&nbsp; ace from a deck 7.7% &nbsp;|&nbsp; your sports estimate 45%</div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">q — your chance of losing</div>
+                            <div class="def-tech">q = 1 − p (ignoring pushes)</div>
+                            <p>The other side of the same coin. If you win 45% of the time you lose 55% of the time.</p>
+                            <p><strong>How to get it:</strong> 100% minus your win chance. If some outcomes push, remove that share first — a push is neither a win nor a loss.</p>
+                            <div class="def-examples">Examples: p = 45% → q = 55% &nbsp;|&nbsp; p = 90% → q = 10%</div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">Decimal odds</div>
+                            <div class="def-tech">total returned ÷ stake</div>
+                            <p>How much comes back per $1 staked if you win, stake included. 2.50 means a $100 stake returns $250.</p>
+                            <p><strong>How to get it:</strong> fractional → 1 + top ÷ bottom; American positive → 1 + number ÷ 100; American negative → 1 + 100 ÷ number; percentage → 100 ÷ %.</p>
+                            <div class="def-examples">Examples: 3/1 → 4.00 &nbsp;|&nbsp; +150 → 2.50 &nbsp;|&nbsp; −200 → 1.50 &nbsp;|&nbsp; 25% → 4.00</div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">Fractional odds</div>
+                            <div class="def-tech">profit ÷ stake, e.g. 3/1 or 4/5</div>
+                            <p>The old UK format, showing <strong>profit only</strong>. 3/1 wins $3 for every $1; 4/5 wins 80c for every $1, and you always get the stake back on top.</p>
+                            <p><strong>How to get it:</strong> from decimal, subtract 1 and write it over 1: 2.50 → 1.5/1 → 3/2.</p>
+                            <div class="def-examples">Examples: 1/2 → decimal 1.50 &nbsp;|&nbsp; 6/5 → 2.20 &nbsp;|&nbsp; 5/1 → 6.00</div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">American (moneyline) odds</div>
+                            <div class="def-tech">+ underdog, − favorite</div>
+                            <p>Two different questions in one format. A <strong>plus</strong> number is the profit on a $100 stake: +150 wins $150. A <strong>minus</strong> number is the stake needed to win $100: −200 means risking $200 to win $100.</p>
+                            <p><strong>How to get it:</strong> decimal ≥ 2 → (decimal − 1) × 100 with a plus sign; decimal &lt; 2 → −100 ÷ (decimal − 1).</p>
+                            <div class="def-examples">Examples: +100 = even money = 2.00 &nbsp;|&nbsp; −110 = 1.91 &nbsp;|&nbsp; +250 = 3.50</div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">Break-even win rate</div>
+                            <div class="def-tech">1 ÷ decimal odds</div>
+                            <p>The win rate that leaves you exactly level over the long run. At 2.50 you must win 40% of the time to break even; at 1.50 you must win 66.7%.</p>
+                            <p><strong>How to get it:</strong> 100 ÷ decimal odds. Then compare with your own <code class="kc-code">p</code> — that gap <em>is</em> your edge.</p>
+                            <div class="def-examples">Examples: 1.50 → 66.7% &nbsp;|&nbsp; 2.50 → 40.0% &nbsp;|&nbsp; 11.00 → 9.1%</div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">Edge (also &ldquo;value&rdquo;, expected value)</div>
+                            <div class="def-tech">edge = p × b − q</div>
+                            <p>Your expected profit per $1 staked. +0.10 means for every $1,000 you put through identical bets you expect about +$100 on average.</p>
+                            <p><strong>How to get it:</strong> multiply your win chance by b, then subtract your loss chance. Positive = bet exists. Negative = walk away.</p>
+                            <div class="def-examples">Examples: p 55% at 2.00 → 0.55×1 − 0.45 = <strong>+0.10</strong> &nbsp;|&nbsp; p 45% at 2.50 → 0.45×1.5 − 0.55 = <strong>+0.125</strong>
+                                <ul><li>The bookmaker's break-even edge is 0: that is exactly the price with no margin.</li></ul>
+                            </div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">Kelly fraction (f*)</div>
+                            <div class="def-tech">f* = edge ÷ b</div>
+                            <p>The share of your bankroll to stake for fastest long-run growth. 10% on a $1,000 bankroll means a $100 stake.</p>
+                            <p><strong>How to get it:</strong> divide your edge by b. If the result is negative, the correct bet is 0 — never a negative stake.</p>
+                            <div class="def-examples">Examples: edge 0.10 with b 1.00 → <strong>10%</strong> &nbsp;|&nbsp; edge 0.125 with b 1.5 → <strong>8.3%</strong> &nbsp;|&nbsp; edge 0.125 with b 0.5 → <strong>25%</strong>
+                                <ul><li>Short odds make f* big. That is real, not a bug.</li></ul>
+                            </div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">Bankroll</div>
+                            <div class="def-tech">the pot the percentage applies to</div>
+                            <p>The whole amount of money you are prepared to play with. Every stake is a percentage of this, so a growing bankroll means growing stakes — that compounding is the whole point.</p>
+                            <p><strong>How to get it:</strong> money you have genuinely set aside for betting. Nothing you need for anything else.</p>
+                            <div class="def-examples">Examples: a 10% Kelly stake on $1,000 is $100; on $5,000 it is $500</div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">Stake</div>
+                            <div class="def-tech">stake = f × bankroll</div>
+                            <p>The actual money you put on this one bet. Lose it and it is gone; win and you get it back plus the profit.</p>
+                            <p><strong>How to get it:</strong> Kelly % times your bankroll. The calculator does it, and rounds nothing — use your own rounding.</p>
+                            <div class="def-examples">Examples: 8.33% of $1,000 = <strong>$83.33</strong> &nbsp;|&nbsp; 25% of $500 = <strong>$125</strong></div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">Expected value (EV)</div>
+                            <div class="def-tech">EV = stake × edge</div>
+                            <p>The average profit or loss of this single bet, in dollars. It is what the bet is &ldquo;worth&rdquo; to you on average; it says nothing about this particular outcome.</p>
+                            <p><strong>How to get it:</strong> stake × edge. A $100 stake with a 10% edge has an EV of +$10.</p>
+                            <div class="def-examples">Examples: $100 stake, 10% edge → <strong>+$10</strong> &nbsp;|&nbsp; $50 stake, −5% edge → −$2.50</div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">Expected growth rate</div>
+                            <div class="def-tech">p × ln(1 + f b) + q × ln(1 − f)</div>
+                            <p>The compounded growth per bet, in log terms. It is the correct ranking of bet sizes, because it accounts for the fact that a 50% loss needs a 100% gain to recover.</p>
+                            <p><strong>How to get it:</strong> the calculator computes it live. 0.5% per bet means doubling in about 139 bets.</p>
+                            <div class="def-examples">Examples: f* 10% on 2.00 odds → <strong>+0.501%</strong> per bet &nbsp;|&nbsp; 20% on the same bet → about 0 (double Kelly destroys the edge)</div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">Multiplier (fraction of Kelly)</div>
+                            <div class="def-tech">λ, e.g. 0.5 for half Kelly</div>
+                            <p>How big a share of the mathematically ideal stake you actually bet. 0.5 keeps roughly 75% of the growth for half the swings — the usual professional compromise.</p>
+                            <p><strong>How to get it:</strong> pick one. 1.0 for max growth, 0.5 for a smooth ride, 0.25 if you are still learning. Above 1.0 you grow slower <em>and</em> risk more.</p>
+                            <div class="def-examples">Examples: full Kelly 20% → half Kelly 10% &nbsp;|&nbsp; quarter Kelly 5%</div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">Drawdown / losing streak</div>
+                            <div class="def-tech">bankroll × (1 − f)ⁿ after n losses</div>
+                            <p>How far your bankroll falls if several bets lose in a row. This — not the expected value — is what most bettors underestimate.</p>
+                            <p><strong>How to get it:</strong> multiply your bankroll by (1 − f) once per loss. At f = 10%, three losses take $1,000 to $729.</p>
+                            <div class="def-examples">Examples: f 10% → 5 losses = −41% &nbsp;|&nbsp; f 25% → 5 losses = −76% &nbsp;|&nbsp; f 50% → 2 losses = −75%</div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">Vig / margin / overround</div>
+                            <div class="def-tech">total implied % of the market − 100%</div>
+                            <p>The bookmaker's built-in profit. If both sides of a two-way market carry 52.4% implied chance, the total is 104.7% and the margin is 4.7%.</p>
+                            <p><strong>How to get it:</strong> add up 1 ÷ decimal odds for every possible outcome, then subtract 100%. The fair price is what is left after removing that margin proportionally.</p>
+                            <div class="def-examples">Examples: −110 / −110 (1.91 each) → 104.7%, margin 4.7% &nbsp;|&nbsp; a perfectly fair market → 100%, margin 0%</div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">Push / void</div>
+                            <div class="def-tech">outcome where nothing changes hands</div>
+                            <p>A tie or a voided bet returns your stake. It is neither a win nor a loss, so it must be taken out of p and q — otherwise you overstate your edge.</p>
+                            <p><strong>How to get it:</strong> estimate how often the event ties. If 4% of games push, split the remaining 96% between winning and losing.</p>
+                            <div class="def-examples">Examples: NFL spread pushes ≈ 2–5% of games &nbsp;|&nbsp; a suspended match = void</div>
+                        </div>
+
+                        <div class="def-item">
+                            <div class="def-name">Full Kelly / Half Kelly</div>
+                            <div class="def-tech">100% or 50% of f*</div>
+                            <p>Shorthand for how much of the ideal stake you use. Full Kelly grows fastest but has the roughest path. Half Kelly is the most common real-world choice.</p>
+                            <p><strong>How to get it:</strong> multiply f* by 0.5 for half, 0.25 for quarter. The calculator's aggression selector does this for you.</p>
+                            <div class="def-examples">Examples: f* 8% → half Kelly 4% &nbsp;|&nbsp; f* 25% → quarter Kelly 6.25%</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= EXAMPLES ================= -->
+            <section class="kc-block" id="kc-examples">
+                <h2>Worked examples, start to finish</h2>
+                <p class="kc-help" style="margin-top:-10px; margin-bottom:18px">Every example below follows the same four lines: <strong>write down the odds → write down your chance → get b → divide</strong>. Press the matching chip at the top of the calculator to load any of them and watch the numbers move.</p>
+
+                <div class="kc-exgrid">
+
+                    <div class="kc-ex">
+                        <span class="kc-tag">Coin flip · the simplest case</span>
+                        <h4>A coin that lands heads 55% of the time, paying even money (2.00)</h4>
+                        <p class="kc-exset">This is the textbook Kelly problem. You believe heads comes up 55% of the time and someone pays you $1 for every $1 staked.</p>
+                        <div class="kc-eq">odds → b = 2.00 − 1 = <strong>1.00</strong>
+edge = 0.55 × 1.00 − 0.45 = <strong>0.10</strong> (a 10% edge)
+f* = 0.10 ÷ 1.00 = <strong>0.10 → 10%</strong>
+$1,000 bankroll → stake <strong>$100</strong> (half Kelly: $50)</div>
+                        <div class="kc-answer"><strong>Answer:</strong> bet 10% of your bankroll. Expect +$0.501 of compounded growth per bet — roughly <strong>139 bets to double</strong> your money. Bet 20% instead (double Kelly) and your long-run growth falls to about zero: you are taking twice the risk for none of the reward.</div>
+                        <p class="kc-lesson"><strong>Lesson:</strong> a 5-point edge over a 50/50 bet is worth 10% of your bankroll, not 50%. Kelly is almost always more conservative than a beginner expects.</p>
+                    </div>
+
+                    <div class="kc-ex">
+                        <span class="kc-tag">Coin flip · thinner payout</span>
+                        <h4>The same coin, but paid only 1.80 (4/5)</h4>
+                        <p class="kc-exset">You still win 60% of the time, but the payout is smaller.</p>
+                        <div class="kc-eq">b = 0.80&nbsp;&nbsp;|&nbsp;&nbsp;edge = 0.60 × 0.80 − 0.40 = <strong>0.08</strong>
+f* = 0.08 ÷ 0.80 = <strong>10%</strong>&nbsp;&nbsp;(same stake as the 10% edge at even money!)</div>
+                        <div class="kc-answer"><strong>Answer:</strong> still a 10% stake — but the growth is slower: <strong>+0.403% per bet</strong> versus +0.501%. Same stake, less reward, because the odds are thinner.</div>
+                        <p class="kc-lesson"><strong>Lesson:</strong> the stake depends on <em>edge ÷ b</em>, and the quality of the bet depends on both. Two bets can deserve the same stake while being very different opportunities.</p>
+                    </div>
+
+                    <div class="kc-ex">
+                        <span class="kc-tag">Dice · no edge</span>
+                        <h4>Rolling a 6 on a fair die, paid 6.00</h4>
+                        <p class="kc-exset">&ldquo;Roll a six and I'll pay you 5 to 1&rdquo; — that is decimal odds of 6.00. Is it a good bet?</p>
+                        <div class="kc-eq">p = 1/6 = <strong>16.67%</strong>&nbsp;&nbsp;|&nbsp;&nbsp;b = 6.00 − 1 = 5.00
+edge = 0.1667 × 5.00 − 0.8333 = 0.8333 − 0.8333 = <strong>0.00</strong>
+f* = 0 ÷ 5 = <strong>0%</strong></div>
+                        <div class="kc-answer"><strong>Answer:</strong> no bet. The price is fair to within a rounding error, so your expected profit is $0 and Kelly stakes nothing. There is no reward to chase and only variance to collect.</div>
+                        <p class="kc-lesson"><strong>Lesson:</strong> fair odds are not an opportunity. You need the payout to be better than fair to have any edge.</p>
+                    </div>
+
+                    <div class="kc-ex">
+                        <span class="kc-tag">Dice · a real (if tiny) edge</span>
+                        <h4>Rolling a 6, but paid 7.00 instead of 6.00</h4>
+                        <p class="kc-exset">A generous friend pays you 6 to 1 on a single face of a fair die.</p>
+                        <div class="kc-eq">b = 7.00 − 1 = <strong>6.00</strong>
+edge = (1/6) × 6.00 − (5/6) = 1.00 − 0.8333 = <strong>0.1667</strong>
+f* = 0.1667 ÷ 6.00 = <strong>0.0278 → 2.78%</strong>
+$1,000 bankroll → stake <strong>$27.78</strong></div>
+                        <div class="kc-answer"><strong>Answer:</strong> a 16.7% edge, but only a 2.78% stake — $27.78 on $1,000. Growth is +0.222% per roll (about 313 rolls to double).</div>
+                        <p class="kc-lesson"><strong>Lesson:</strong> big odds (long shots) mean small stakes. The bigger the odds, the more often you lose along the way, and Kelly protects you from that.</p>
+                    </div>
+
+                    <div class="kc-ex">
+                        <span class="kc-tag">Cards · counting outcomes</span>
+                        <h4>Drawing an ace from a full deck at decimal 15.00</h4>
+                        <p class="kc-exset">4 aces in 52 cards = 7.69%. Someone offers 15.00 for it.</p>
+                        <div class="kc-eq">p = 4/52 = <strong>7.692%</strong>&nbsp;&nbsp;|&nbsp;&nbsp;b = 15.00 − 1 = <strong>14.00</strong>
+edge = 0.07692 × 14.00 − 0.92308 = 1.07692 − 0.92308 = <strong>0.1538</strong>
+f* = 0.1538 ÷ 14.00 = <strong>0.011 → 1.10%</strong>
+$1,000 bankroll → stake <strong>$10.99</strong></div>
+                        <div class="kc-answer"><strong>Answer:</strong> only 1.1% of your bankroll — about $11. Fair odds would be 52 ÷ 4 = 13.00, so 15.00 is genuinely generous and still only justifies a tiny stake.</div>
+                        <p class="kc-lesson"><strong>Lesson:</strong> long-odds bets always want small stakes, and the fair price is just the reciprocal of the probability: <code class="kc-code">1 ÷ 0.07692 = 13.00</code>.</p>
+                    </div>
+
+                    <div class="kc-ex">
+                        <span class="kc-tag">Sports · underdog</span>
+                        <h4>A +150 underdog (decimal 2.50) you make 45% to win</h4>
+                        <p class="kc-exset">The market implies 40% (100 ÷ 2.50). You have researched the match and think 45% is fair.</p>
+                        <div class="kc-eq">b = 2.50 − 1 = <strong>1.50</strong>
+edge = 0.45 × 1.50 − 0.55 = 0.675 − 0.55 = <strong>0.125</strong> (+12.5%)
+f* = 0.125 ÷ 1.50 = <strong>0.0833 → 8.33%</strong>
+$1,000 bankroll → stake <strong>$83.33</strong>&nbsp;(half Kelly: $41.67)</div>
+                        <div class="kc-answer"><strong>Answer:</strong> stake 8.33% of your bankroll, worth +0.515% of compounded growth per bet (about 135 bets to double). Same numbers in the ≤ −200 row below, but notice how different the stake is.</div>
+                        <p class="kc-lesson"><strong>Lesson:</strong> five percentage points of disagreement with the market is a 12.5% edge at these odds — that is a big claim. Be honest with yourself about how confident you really are.</p>
+                    </div>
+
+                    <div class="kc-ex">
+                        <span class="kc-tag">Sports · heavy favorite</span>
+                        <h4>A −200 favorite (decimal 1.50) you make 75% — and why the stake scares people</h4>
+                        <p class="kc-exset">The market says 66.7% (100 ÷ 1.50). You think it is really 75%.</p>
+                        <div class="kc-eq">b = 1.50 − 1 = <strong>0.50</strong>
+edge = 0.75 × 0.50 − 0.25 = 0.375 − 0.25 = <strong>0.125</strong>
+f* = 0.125 ÷ 0.50 = <strong>0.25 → 25% of your bankroll</strong>
+$1,000 bankroll → stake <strong>$250</strong></div>
+                        <div class="kc-answer"><strong>Answer:</strong> Kelly says 25% — a quarter of everything, on one game. That is not a mistake: short odds pay so little that the ideal stake is large. Half Kelly would be $125, and many bettors would cap it at 5–10%.</div>
+                        <p class="kc-lesson"><strong>Lesson — the fragility of thin odds:</strong> the same bet with slightly different beliefs gives wildly different answers. If the true chance is 75% → 25%. If it is 70% → 10%. If it is 65% → <strong>no bet at all</strong>. Small errors in <code class="kc-code">p</code> move your stake enormously when b is small, so favour half Kelly or a cap here.</p>
+                    </div>
+
+                    <div class="kc-ex">
+                        <span class="kc-tag">Sports · reading past the vig</span>
+                        <h4>Both sides at −110: what is the real chance?</h4>
+                        <p class="kc-exset">A typical spread market: both sides at decimal 1.91.</p>
+                        <div class="kc-eq">implied each side = 100 ÷ 1.91 = 52.4%&nbsp;&nbsp;→&nbsp;&nbsp;total = <strong>104.7%</strong>
+bookmaker margin = <strong>4.7%</strong>
+fair chance = 52.4 ÷ 104.7 = <strong>50.0%</strong>&nbsp;&nbsp;→&nbsp;&nbsp;fair decimal odds = 100 ÷ 50.0 = <strong>2.00</strong></div>
+                        <div class="kc-answer"><strong>Answer:</strong> a coin flip in disguise. The margin-free price is 2.00, so betting one side at 1.91 has an edge of 0.5 × 0.909 − 0.5 = <strong>−4.5%</strong> per dollar and Kelly says 0%. At the fair price of 2.00 the bet would break exactly even — no profit, no loss.</div>
+                        <p class="kc-lesson"><strong>Lesson:</strong> every price contains the bookmaker's margin. Use the &ldquo;remove the margin&rdquo; helper in step 3, then decide whether you truly know something the market does not.</p>
+                    </div>
+
+                    <div class="kc-ex">
+                        <span class="kc-tag">Sports · pushes</span>
+                        <h4>A spread bet where ties happen: −110 with a 4% push</h4>
+                        <p class="kc-exset">You think you win 54% of the time, lose 42%, and 4% of games land exactly on the number and push (stake returned).</p>
+                        <div class="kc-eq">b = (100 ÷ 110) = <strong>0.909</strong>
+edge = 0.54 × 0.909 − 0.42 = 0.4909 − 0.42 = <strong>0.0709</strong>
+f* = 0.0709 ÷ 0.909 = <strong>0.078 → 7.80%</strong>
+wrong (counting the push as a loss): 0.54 × 0.909 − 0.46 = 0.0309 → <strong>3.40%</strong></div>
+                        <div class="kc-answer"><strong>Answer:</strong> 7.8% of your bankroll, once the push is correctly removed from the win/loss split. Handle it the wrong way and the calculator would have told you 3.4% — less than half the right answer.</div>
+                        <p class="kc-lesson"><strong>Lesson:</strong> a push is money back, not a loss. It must be excluded from p and q, and it makes your effective edge bigger, not smaller.</p>
+                    </div>
+
+                    <div class="kc-ex">
+                        <span class="kc-tag">Horse racing</span>
+                        <h4>A horse at 3/1 (decimal 4.00) you make 35% to win</h4>
+                        <p class="kc-exset">The market says 25%. You believe your form study says 35%.</p>
+                        <div class="kc-eq">b = 4.00 − 1 = <strong>3.00</strong>
+edge = 0.35 × 3.00 − 0.65 = 1.05 − 0.65 = <strong>0.40</strong> (+40%!)
+f* = 0.40 ÷ 3.00 = <strong>0.133 → 13.33%</strong>
+$1,000 bankroll → stake <strong>$133.33</strong>&nbsp;(half Kelly: $66.67)</div>
+                        <div class="kc-answer"><strong>Answer:</strong> 13.33% of your bankroll. A genuine 40% edge is enormous and yet Kelly still only asks for an eighth of your money.</div>
+                        <p class="kc-lesson"><strong>Lesson:</strong> the biggest edges appear where markets are least efficient — and also where your estimate is most likely to be wrong. Remember the track takeout (often 15–20%) is baked into every price, so beating a horse market consistently is extremely hard.</p>
+                    </div>
+
+                    <div class="kc-ex">
+                        <span class="kc-tag">Casino · negative edge</span>
+                        <h4>Roulette, single number (pays 35 to 1, decimal 36.00)</h4>
+                        <p class="kc-exset">European wheel: 37 pockets. American wheel: 38 pockets. Both pay as if there were 36.</p>
+                        <div class="kc-eq">European: p = 1/37 = 2.703%, b = 35
+edge = 0.02703 × 35 − 0.97297 = 0.94595 − 0.97297 = <strong>−0.0270 → −2.70%</strong>
+American: edge = (1/38 × 35) − 37/38 = <strong>−5.26%</strong>
+f* = negative → <strong>0%</strong></div>
+                        <div class="kc-answer"><strong>Answer:</strong> never bet. Every $100 wagered costs you $2.70 on a European wheel and $5.26 on an American one on average. Kelly's answer to a negative edge is always zero.</div>
+                        <p class="kc-lesson"><strong>Lesson:</strong> if the payout is smaller than the true odds, no staking plan can rescue it. Sizing cannot fix a bad price.</p>
+                    </div>
+
+                    <div class="kc-ex">
+                        <span class="kc-tag">Card counting · small edge, small stake</span>
+                        <h4>A 1% edge at even money (the classic blackjack situation)</h4>
+                        <p class="kc-exset">A card counter believes the deck is 51% in their favour on a hand that pays even money.</p>
+                        <div class="kc-eq">b = <strong>1.00</strong>&nbsp;&nbsp;|&nbsp;&nbsp;edge = 0.51 × 1 − 0.49 = <strong>0.02</strong>
+f* = 0.02 ÷ 1.00 = <strong>2%</strong>&nbsp;&nbsp;(half Kelly = 1%, quarter Kelly = 0.5%)</div>
+                        <div class="kc-answer"><strong>Answer:</strong> 2% of your bankroll. This is why real card counters bet small multiples of their bankroll even when they know they have the advantage — and why the licensed-professional route is to bet a fraction of Kelly when your estimate of the edge is noisy.</div>
+                        <p class="kc-lesson"><strong>Lesson:</strong> a real, verifiable 1% edge is worth about 2% of your money at even money. Anyone promising to double your bankroll with a 1% edge is selling something.</p>
+                    </div>
+
+                    <div class="kc-ex">
+                        <span class="kc-tag">Several bets at once</span>
+                        <h4>Two good bets on the same day</h4>
+                        <p class="kc-exset">You have two independent bets, each with f* = 5% for a $1,000 bankroll. Should each be $50, so $100 total at risk?</p>
+                        <div class="kc-eq">independent bets → combined risk is <em>less</em> than the sum of the risks, so 5% each ($50 + $50) is the usual practical answer
+correlated bets (same team, same result) → treat them as ONE bet and split the one Kelly stake between them, not both</div>
+                        <div class="kc-answer"><strong>Answer:</strong> bet 5% on each if they are genuinely independent, and treat correlated bets as a single position. When your bankroll is being spread across many simultaneous positions, the exact multi-bet solution is more conservative than the sum of the individual Kelly stakes.</div>
+                        <p class="kc-lesson"><strong>Lesson:</strong> Kelly is a rule for your total exposure, not a licence to add up individual stakes. Same game, same driver, same correlation — one position.</p>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:8px">
+                    <h3 style="color:var(--primary); margin-top:0">Cheat sheet — the whole page in ten lines</h3>
+                    <div class="kc-eq">decimal odds = total returned ÷ stake = 1 + (profit ÷ stake)</div>
+                    <div class="kc-eq">fractional → decimal: 1 + top ÷ bottom&nbsp;&nbsp;|&nbsp;&nbsp;American +150 → 2.50 (1 + 1.5) &nbsp;|&nbsp; −200 → 1.50 (1 + 100 ÷ 200)</div>
+                    <div class="kc-eq">break-even win rate = 1 ÷ decimal odds&nbsp;&nbsp;|&nbsp;&nbsp;fair decimal odds = 1 ÷ true probability</div>
+                    <div class="kc-eq">b = decimal odds − 1&nbsp;&nbsp;|&nbsp;&nbsp;edge = p × b − q&nbsp;&nbsp;|&nbsp;&nbsp;q = 1 − p (pushes removed first)</div>
+                    <div class="kc-eq">Kelly % = edge ÷ b&nbsp;&nbsp;=&nbsp;&nbsp;p − q ÷ b&nbsp;&nbsp;=&nbsp;&nbsp;(p × decimal − 1) ÷ (decimal − 1)</div>
+                    <div class="kc-eq">negative edge → stake nothing, ever</div>
+                    <div class="kc-eq">stake = Kelly % × bankroll&nbsp;&nbsp;|&nbsp;&nbsp;EV of the bet = stake × edge</div>
+                    <div class="kc-eq">growth per bet = p × ln(1 + f b) + q × ln(1 − f)&nbsp;&nbsp;|&nbsp;&nbsp;double when cumulative growth reaches ln 2 ≈ 0.693</div>
+                    <div class="kc-eq">half Kelly keeps about 75% of the growth with about half the swings&nbsp;&nbsp;|&nbsp;&nbsp;above full Kelly you grow slower and risk more</div>
+                    <div class="kc-eq">recalculate after every bet: the percentage is the answer, the dollars follow your bankroll</div>
+                </div>
+
+                <div class="kc-intro" style="margin-top:26px">
+                    <h3 style="color:var(--primary); font-family:'JetBrains Mono', monospace; font-size:15px; margin:0 0 10px">⚠️ Sensible-use note</h3>
+                    <p class="kc-help" style="font-size:13px">Kelly is a tool for sizing bets you have already decided have an edge. It is not a way to turn a losing bet into a winning one, and it cannot fix a probability you guessed. Sports betting and casino games can be addictive and are illegal or age-restricted in many places — check your local rules, never bet money you need, and if betting stops being fun, stop. The calculator will happily tell you <strong>0%</strong>; that is often the most valuable answer it gives.</p>
+                </div>
+            </section>
+        </div>
+        <!-- /tab-calc -->
+
 
         <!-- CONVERSION TAB -->
         <div id="tab-conv" class="main-tab" style="display:none;">
@@ -434,7 +1530,9 @@
         };
 
         window.onload = () => {
-            initCharts(); updateRigging(); updateSimUI(); updateCardInputs(); nextEstimation(); nextTQ(); switchTab('play');
+            initCharts(); updateRigging(); updateSimUI(); updateCardInputs(); nextEstimation(); nextTQ();
+            kcInit();                      // calculator: history, live maths, charts
+            switchTab('calc');             // the site now opens on the calculator tab
         };
 
         function switchTab(tab, e) {
@@ -443,8 +1541,23 @@
             const btn = document.getElementById('tab-btn-' + tab);
             if(btn) btn.classList.add('active');
             document.querySelectorAll('.main-tab').forEach(t => t.style.display = 'none');
-            document.getElementById('tab-' + tab).style.display = 'block';
+            const panel = document.getElementById('tab-' + tab);
+            if (panel) panel.style.display = 'block';
+            const titles = {
+                calc: ["Kelly Criterion Calculator — Learn the Optimal Bet Size", "KELLY CRITERION CALCULATOR", "Find your optimal bet size, step by step — every number explained"],
+                play: ["Kelly's Game — Mathematically Optimal Betting", "KELLY'S GAME", "Mathematically optimal betting"],
+                estimate: ["Kelly's Game — Estimation Drill", "ESTIMATION DRILL", "Guess the optimal stake before the maths does"],
+                conv: ["Kelly's Game — Odds Conversion", "ODDS CONVERSION", "Fractional, decimal, American and probability"],
+                cards: ["Kelly's Game — Card Draw", "CARD DRAW", "Sizing for low-probability draws"],
+                learn: ["Kelly's Game — Learn the Theory", "LEARN THEORY", "Definitions, formulas and worked examples"]
+            };
+            const meta = titles[tab] || titles.play;
+            document.title = meta[0];
+            const h1 = document.getElementById('page-title'), sub = document.getElementById('page-subtitle');
+            if (h1) { h1.textContent = meta[1]; h1.classList.toggle('kc-long', tab === 'calc'); }
+            if (sub) { sub.textContent = meta[2]; }
             if(tab === 'play' && sim.equityChart) { sim.equityChart.update(); sim.distChart.update(); }
+            if(tab === 'calc') { kcUpdate(); if (kcCurveChart) kcCurveChart.resize(); if (kcSimChart) kcSimChart.resize(); }
         }
 
         function initCharts() {
@@ -660,8 +1773,735 @@
         function nextTQ() { const tqLib = [{v: "2:1", formats: ["33%", "3.00"]}, {v: "3:1", formats: ["25%", "4.00"]}, {v: "4:1", formats: ["20%", "5.00"]}]; const item = tqLib[Math.floor(Math.random()*tqLib.length)]; const target = item.formats[Math.floor(Math.random()*2)]; document.getElementById('tq-label').textContent = `CONVERT ${item.v}`; document.getElementById('tq-text').textContent = "?"; const options = shuffle([target, "5:1", "15%", "6.00"]); document.getElementById('tq-answers').innerHTML = options.map(o => `<button class="btn-outline" onclick="checkTQ('${o}', '${target}', '${item.v}')">${o}</button>`).join(''); }
         function checkTQ(p, a, q) { const fb = document.getElementById('tq-feedback'); fb.classList.add('visible'); const correct = p === a; fb.className = `feedback visible ${correct ? 'correct' : 'wrong'}`; fb.innerHTML = `<strong>${correct ? 'Correct!' : 'Incorrect'}</strong><p>${q} is ${a}.</p><button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="nextTQ()">Next</button>`; }
         function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
-        window.onkeydown = (e) => { if(e.code === 'Space') { e.preventDefault(); flipOnce(); } if(e.code === 'Enter') { e.preventDefault(); toggleAuto(); } }
+        window.onkeydown = (e) => {
+            // Never hijack the keyboard while the user is typing in an input (the calculator tab is full of them).
+            const t = e.target;
+            if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+            const playPanel = document.getElementById('tab-play');
+            if (!playPanel || playPanel.style.display === 'none') return;
+            if(e.code === 'Space') { e.preventDefault(); flipOnce(); }
+            if(e.code === 'Enter') { e.preventDefault(); toggleAuto(); }
+        }
         function recalcLab() {} function initLabCharts() {}
+
+        /* ============================================================
+           KELLY CRITERION CALCULATOR — logic
+           Everything runs locally in the browser. No network, no fees.
+           ============================================================ */
+        const KC_STORE_KEY = 'kcHistoryV1';
+        const KC_MAX_HISTORY = 100;
+        const KC_SIM_RUNS = 400;
+        const KC_SIM_BETS = 100;
+        const KC_SEED = 987654321;
+        const KC_MIN_F = 0.0001;      // stakes below 0.01% of bankroll are "not worth betting"
+
+        const kcState = {
+            fmt: 'decimal',      // which odds box is showing
+            decimal: 2.00,       // canonical odds (decimal = what you get back per $1)
+            p: 55,               // your win chance, in %
+            push: 0,             // chance of a push/void, in %
+            bankroll: 1000,
+            mult: 100,           // share of full Kelly, in %
+            cap: 0,              // optional max stake, in % (0 = no cap)
+            label: '',
+            other: 1.80,         // other side of the market, for the no-vig helper
+            fracNum: 1,
+            fracDen: 1
+        };
+        let kcHistory = [];
+        let kcCurveChart = null, kcSimChart = null;
+        let kcLastStake = null, kcFlashUntil = 0;
+
+        /* ---------------- small helpers ---------------- */
+        const kcClamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+        const kcEl = id => document.getElementById(id);
+        function kcText(id, t) { const e = kcEl(id); if (e) e.textContent = t; }
+        function kcHTML(id, h) { const e = kcEl(id); if (e) e.innerHTML = h; }
+        function kcMoney(v, dp) {
+            dp = dp === undefined ? 2 : dp;
+            const neg = v < 0, a = Math.abs(v);
+            const s = (Object.is(v, -0) ? 0 : a).toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+            return (neg ? '-$' : '$') + s;
+        }
+        function kcPct(v, dp) { return (v * 100).toFixed(dp === undefined ? 2 : dp) + '%'; }
+        function kcSignedPct(v, dp) { return (v >= 0 ? '+' : '-') + (Math.abs(v) * 100).toFixed(dp === undefined ? 2 : dp) + '%'; }
+        function kcSignedMoney(v, dp) { return (v >= 0 ? '+' : '-') + kcMoney(Math.abs(v), dp === undefined ? 2 : dp); }
+        function kcShortMoney(v) {
+            const a = Math.abs(v);
+            if (a >= 1000000) return (v < 0 ? '-$' : '$') + (a / 1000000).toFixed(a >= 10000000 ? 0 : 1) + 'M';
+            if (a >= 1000) return (v < 0 ? '-$' : '$') + (a / 1000).toFixed(a >= 100000 ? 0 : 1) + 'k';
+            return (v < 0 ? '-$' : '$') + a.toFixed(0);
+        }
+        function kcGcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { const t = b; b = a % b; a = t; } return a || 1; }
+
+        /* odds conversions */
+        function kcDecimalToAmerican(D) {
+            const b = D - 1;
+            if (!(b > 0)) return '—';
+            if (D >= 2) return '+' + Math.round(b * 100);
+            return String(-Math.round(100 / b));
+        }
+        function kcDecimalToFraction(D) {
+            const x = D - 1;
+            if (!(x > 0)) return '—';
+            // Walk up the denominators and stop at the simplest fraction that is within 0.2%
+            // of the real value — that turns 1.91 into 10/11 (the familiar -110) rather than 91/100.
+            let bn = Math.max(1, Math.round(x)), bd = 1, bestErr = Infinity;
+            for (let den = 1; den <= 200; den++) {
+                const num = Math.max(1, Math.round(x * den));
+                const err = Math.abs(x - num / den) / x;
+                if (err < bestErr) { bestErr = err; bn = num; bd = den; }
+                if (err <= 0.002) break;
+            }
+            const g = kcGcd(bn, bd);
+            return (bn / g) + '/' + (bd / g);
+        }
+        function kcFractionParts(D) {
+            const s = kcDecimalToFraction(D).split('/');
+            if (s.length !== 2) return { n: 1, d: 1 };
+            return { n: parseInt(s[0], 10) || 1, d: parseInt(s[1], 10) || 1 };
+        }
+        function kcParseAmerican(raw) {
+            const s = String(raw).trim().replace(/[^0-9.+-]/g, '');
+            if (!s || s === '+' || s === '-' || s === '.') return null;
+            const n = parseFloat(s);
+            if (!isFinite(n) || n === 0) return null;
+            return n > 0 ? 1 + n / 100 : 1 + 100 / Math.abs(n);
+        }
+
+        /* ---------------- the maths ---------------- */
+        // Expected compounded growth per bet for win chance p, push chance, net odds b and stake f.
+        function kcGrowthAt(p, push, b, f) {
+            if (!(f > 0)) return 0;
+            const q = Math.max(0, 1 - p - push);
+            const fc = Math.min(f, 0.999999);
+            return p * Math.log(1 + fc * b) + q * Math.log(1 - fc);
+        }
+        // Upper break-even stake: betting past this shrinks the bankroll over time.
+        function kcZeroCross(p, push, b, fstar, fmax) {
+            if (!(fstar > 1e-9) || fmax <= fstar) return null;
+            if (kcGrowthAt(p, push, b, fmax) > 0) return null;
+            let lo = fstar, hi = fmax;
+            for (let i = 0; i < 70; i++) {
+                const mid = (lo + hi) / 2;
+                if (kcGrowthAt(p, push, b, mid) > 0) lo = mid; else hi = mid;
+            }
+            return (lo + hi) / 2;
+        }
+
+        function kcCompute() {
+            const D = kcState.decimal;
+            const b = D - 1;
+            const implied = 100 / D;                       // % the price implies
+            const pPct = kcClamp(kcState.p, 0, 100);
+            let pushPct = kcClamp(kcState.push, 0, 99);
+            let pushClamped = false;
+            if (pPct + pushPct > 100) { pushPct = Math.max(0, 100 - pPct); pushClamped = true; }
+            const p = pPct / 100, push = pushPct / 100, q = Math.max(0, 1 - p - push);
+
+            const edge = p * b - q;
+            const fstar = b > 0 ? Math.max(0, edge / b) : 0;     // full Kelly
+            const noEdge = edge <= 0;                            // no advantage at all
+            const noBet = fstar <= KC_MIN_F;                      // advantage too small to be worth risking
+
+            const mult = kcClamp(kcState.mult, 1, 200) / 100;
+            let f = noBet ? 0 : kcClamp(fstar * mult, 0, 1);
+            const cap = kcClamp(kcState.cap, 0, 100) / 100;
+            let capped = false;
+            if (cap > 0 && f > cap) { f = cap; capped = true; }
+            const multAbove = mult > 1.0000001;
+
+            const bankroll = Math.max(0, kcState.bankroll);
+            const stake = f * bankroll;
+            const ev = stake * edge;
+            const growth = kcGrowthAt(p, push, b, f);
+            const peakGrowth = noBet ? 0 : kcGrowthAt(p, push, b, fstar);
+            const growthKeep = peakGrowth > 1e-12 ? kcClamp(growth / peakGrowth, 0, 1.5) : 0;
+            const doubleBets = growth > 1e-9 ? Math.log(2) / growth : Infinity;
+            return {
+                D, b, implied, pPct, pushPct, pushClamped, p, push, q, edge, fstar, noBet, noEdge,
+                mult, f, cap, capped, multAbove, bankroll, stake, ev, growth, peakGrowth, growthKeep, doubleBets
+            };
+        }
+
+        /* ---------------- simulation (for the stats + charts) ---------------- */
+        function kcMulberry32(a) {
+            return function () {
+                a |= 0; a = a + 0x6D2B79F5 | 0;
+                let t = Math.imul(a ^ a >>> 15, 1 | a);
+                t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            };
+        }
+        function kcSimulate(p, push, b, f, start, runs, bets) {
+            const rng = kcMulberry32(KC_SEED);
+            const paths = new Float64Array(runs * bets);
+            const finals = new Float64Array(runs);
+            let dipped = 0, doubled = 0, profit = 0;
+            for (let r = 0; r < runs; r++) {
+                let bal = start, dip = false;
+                for (let i = 0; i < bets; i++) {
+                    const u = rng();
+                    if (u < p) bal *= (1 + f * b);
+                    else if (u < p + push) { /* push: stake returned, nothing changes */ }
+                    else bal *= (1 - f);
+                    if (bal <= start / 2) dip = true;
+                    paths[r * bets + i] = bal;
+                }
+                if (dip) dipped++;
+                if (bal > start) profit++;
+                if (bal >= start * 2) doubled++;
+                finals[r] = bal;
+            }
+            const col = new Array(runs);
+            const p10 = [], p50 = [], p90 = [];
+            for (let i = 0; i < bets; i++) {
+                for (let r = 0; r < runs; r++) col[r] = paths[r * bets + i];
+                col.sort((x, y) => x - y);
+                p10.push(col[Math.floor(runs * 0.10)]);
+                p50.push(col[Math.floor(runs * 0.50)]);
+                p90.push(col[Math.floor(runs * 0.90)]);
+            }
+            const fSorted = Array.from(finals).sort((x, y) => x - y);
+            return {
+                p10, p50, p90,
+                medianFinal: fSorted[Math.floor(runs * 0.5)],
+                p10Final: fSorted[Math.floor(runs * 0.1)],
+                p90Final: fSorted[Math.floor(runs * 0.9)],
+                probProfit: profit / runs,
+                probDouble: doubled / runs,
+                dipped: dipped / runs
+            };
+        }
+
+        /* ---------------- input plumbing ---------------- */
+        function kcSetFmt(fmt) {
+            kcState.fmt = fmt;
+            ['decimal', 'fractional', 'american', 'implied'].forEach(f => {
+                const box = kcEl('kc-fmt-' + f);
+                if (box) box.style.display = (f === fmt) ? 'block' : 'none';
+            });
+            document.querySelectorAll('#kc-fmt-seg button').forEach(b => {
+                b.classList.toggle('active', b.dataset.fmt === fmt);
+            });
+            if (fmt === 'fractional') {
+                const fr = kcFractionParts(kcState.decimal);
+                kcState.fracNum = fr.n; kcState.fracDen = fr.d;
+            }
+            kcUpdate();
+        }
+        function kcSetFrac(n, d) {
+            kcState.fracNum = n; kcState.fracDen = d;
+            kcState.decimal = 1 + n / d;
+            kcUpdate();
+        }
+        function kcSetMult(v) {
+            kcState.mult = kcClamp(parseFloat(v) || 100, 1, 200);
+            kcUpdate();
+        }
+        function kcSet(key, value, el) {
+            const errEl = kcEl('kc-odds-error');
+            const showErr = msg => { if (errEl) { errEl.style.display = 'block'; errEl.textContent = msg; } };
+            const clearErr = () => { if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; } };
+            const raw = typeof value === 'string' ? value.trim() : String(value);
+
+            if (key === 'decimal') {
+                const v = parseFloat(raw);
+                if (isFinite(v)) {
+                    if (v >= 1.01) { kcState.decimal = kcClamp(v, 1.01, 100000); clearErr(); }
+                    else if (raw.length >= 2) showErr('Decimal odds must be 1.01 or more. At 1.00 you would just get your own stake back.');
+                } else if (raw.length >= 2) showErr('Type the decimal odds as a number, e.g. 2.50.');
+            } else if (key === 'american') {
+                const D = kcParseAmerican(raw);
+                if (D) { kcState.decimal = kcClamp(D, 1.001, 100000); clearErr(); }
+                else if (raw.length >= 2) showErr('Type a number with a sign, e.g. +150 for an underdog or -200 for a favorite.');
+            } else if (key === 'implied') {
+                const v = parseFloat(raw);
+                if (isFinite(v) && v > 0 && v < 100) { kcState.decimal = 100 / v; clearErr(); }
+                else if (raw.length >= 2) showErr('The implied win chance must be between 0 and 100%.');
+            } else if (key === 'fracNum' || key === 'fracDen') {
+                const n = parseFloat(kcEl('kc-in-fn').value), d = parseFloat(kcEl('kc-in-fd').value);
+                if (isFinite(n) && isFinite(d) && d > 0 && n >= 0) {
+                    kcState.fracNum = Math.max(0, n); kcState.fracDen = Math.max(1, d);
+                    kcState.decimal = kcClamp(1 + kcState.fracNum / kcState.fracDen, 1.01, 100000);
+                    clearErr();
+                }
+            } else if (key === 'p') {
+                kcState.p = kcClamp(isFinite(parseFloat(raw)) ? parseFloat(raw) : 0, 0, 100);
+            } else if (key === 'push') {
+                kcState.push = kcClamp(isFinite(parseFloat(raw)) ? parseFloat(raw) : 0, 0, 99);
+            } else if (key === 'bankroll') {
+                kcState.bankroll = Math.max(0, isFinite(parseFloat(raw)) ? parseFloat(raw) : 0);
+            } else if (key === 'mult') {
+                kcState.mult = kcClamp(isFinite(parseFloat(raw)) ? parseFloat(raw) : 100, 1, 200);
+            } else if (key === 'cap') {
+                kcState.cap = kcClamp(isFinite(parseFloat(raw)) ? parseFloat(raw) : 0, 0, 100);
+            } else if (key === 'label') {
+                kcState.label = String(value).slice(0, 80);
+            }
+            kcScheduleUpdate();
+        }
+        function kcSyncInputs() {
+            const act = document.activeElement;
+            const D = kcState.decimal;
+            const put = (id, val) => { const e = kcEl(id); if (e && e !== act) e.value = val; };
+            put('kc-in-decimal', D.toFixed(2));
+            put('kc-in-american', kcDecimalToAmerican(D));
+            put('kc-in-implied', (100 / D).toFixed(2));
+            const fr = kcFractionParts(D);
+            kcState.fracNum = fr.n; kcState.fracDen = fr.d;
+            put('kc-in-fn', String(fr.n));
+            put('kc-in-fd', String(fr.d));
+            put('kc-in-label', kcState.label);
+            put('kc-in-p', String(Math.round(kcState.p * 10000) / 10000));
+            put('kc-in-push', String(kcState.push));
+            put('kc-in-bankroll', String(kcState.bankroll));
+            put('kc-in-mult', String(kcState.mult));
+            put('kc-in-cap', String(kcState.cap));
+            const slp = kcEl('kc-sl-p'); if (slp && slp !== act) slp.value = String(kcClamp(kcState.p, 0, 100));
+            const slm = kcEl('kc-sl-mult'); if (slm && slm !== act) slm.value = String(kcClamp(kcState.mult, 5, 200));
+        }
+
+        /* ---------------- live render ---------------- */
+        function kcUpdate() {
+            kcSyncInputs();
+            const c = kcCompute();
+
+            /* --- step 2: odds tiles --- */
+            kcText('kc-o-decimal', c.D.toFixed(2));
+            kcText('kc-o-frac', kcDecimalToFraction(c.D));
+            kcText('kc-o-amer', kcDecimalToAmerican(c.D));
+            kcText('kc-o-implied', c.implied.toFixed(1) + '%');
+            kcText('kc-o-b', c.b.toFixed(2));
+            kcText('kc-o-100', kcMoney(100 * c.D));
+
+            /* --- step 3: probability bar + edge tiles --- */
+            const pPct = kcClamp(c.pPct, 0, 100), iPct = kcClamp(c.implied, 0, 100);
+            const fill = kcEl('kc-probfill'); if (fill) fill.style.width = Math.min(iPct, pPct) + '%';
+            const pinI = kcEl('kc-pin-implied'); if (pinI) pinI.style.left = iPct + '%';
+            const pinY = kcEl('kc-pin-you'); if (pinY) pinY.style.left = pPct + '%';
+            const lblI = kcEl('kc-lbl-implied'); if (lblI) { lblI.style.left = iPct + '%'; lblI.textContent = 'bookmaker needs ' + iPct.toFixed(1) + '%'; }
+            const lblY = kcEl('kc-lbl-you'); if (lblY) { lblY.style.left = pPct + '%'; lblY.textContent = 'you say ' + pPct.toFixed(1) + '%'; }
+            const edgeTone = c.edge > 0 ? 'var(--primary)' : 'var(--danger)';
+            const e1 = kcEl('kc-o-edge'); if (e1) { e1.textContent = kcSignedPct(c.edge, 1); e1.style.color = edgeTone; }
+            const e2 = kcEl('kc-o-ev100'); if (e2) { e2.textContent = kcSignedMoney(c.edge * 100); e2.style.color = edgeTone; }
+            const e3 = kcEl('kc-o-gap'); if (e3) { e3.textContent = (c.pPct - c.implied >= 0 ? '+' : '-') + Math.abs(c.pPct - c.implied).toFixed(1) + ' pts'; e3.style.color = edgeTone; }
+            kcHTML('kc-edge-sentence', c.noBet
+                ? 'Your win chance (<strong>' + c.pPct.toFixed(1) + '%</strong>) is not higher than the break-even rate of <strong>' + c.implied.toFixed(1) + '%</strong>, so your edge is <strong>' + kcSignedPct(c.edge, 1) + '</strong>. Kelly says <strong>do not make this bet</strong>: over many repeats you would expect to lose ' + Math.abs(c.edge * 100).toFixed(2) + '% of everything you stake. Either the odds are too short or your chance estimate is too low.'
+                : 'Your win chance (<strong>' + c.pPct.toFixed(1) + '%</strong>) is <strong>' + (c.pPct - c.implied).toFixed(1) + ' points</strong> above the break-even rate of <strong>' + c.implied.toFixed(1) + '%</strong>, so your edge is <strong>' + kcSignedPct(c.edge, 1) + '</strong> per dollar staked. Over many identical bets that is an average profit of <strong>' + kcSignedMoney(c.edge * 100) + ' per $100</strong> staked.');
+
+            /* --- step 3 helper: no-vig --- */
+            const other = Math.max(1.01, kcState.other || 1.01);
+            const otherImplied = 100 / other;
+            const total = c.implied + otherImplied;              // bookmaker's overround, in %
+            const thisShare = total > 0 ? c.implied / total : 0.5; // where the market really rates this side
+            const fairD = thisShare > 0 ? 1 / thisShare : NaN;   // margin-free decimal odds
+            kcText('kc-vig-total', total.toFixed(1) + '%');
+            kcText('kc-vig-margin', (total - 100).toFixed(1) + '%');
+            kcText('kc-vig-fair', isFinite(fairD) ? fairD.toFixed(2) : '—');
+            kcText('kc-vig-fairp', isFinite(fairD) ? (100 / fairD).toFixed(1) + '%' : '—');
+
+            /* --- step 5 --- */
+            kcText('kc-o-growthkeep', c.noBet ? '—' : (c.growthKeep * 100).toFixed(0) + '%');
+            kcText('kc-o-swing', (c.mult * 100).toFixed(0) + '%');
+            kcText('kc-o-stakecmp', Math.abs(c.mult - 1) < 1e-9 ? 'same as full Kelly' : (c.mult < 1 ? (c.mult * 100).toFixed(0) + '% of full Kelly' : (c.mult * 100).toFixed(0) + '% — above full Kelly'));
+            kcHTML('kc-mult-sentence', c.noBet
+                ? 'There is no positive edge here, so every multiplier gives the same answer: <strong>bet nothing</strong>.'
+                : (c.multAbove
+                    ? 'You are betting <strong>' + (c.mult * 100).toFixed(0) + '%</strong> of full Kelly. Above 100% your long-run growth gets <strong>slower</strong> (' + kcSignedPct(c.growth, 3) + ' per bet instead of ' + kcSignedPct(c.peakGrowth, 3) + ') and the swings get bigger — there is no upside to going beyond full Kelly.'
+                    : (c.mult < 1
+                        ? 'Half-way thinking: at <strong>' + (c.mult * 100).toFixed(0) + '%</strong> of full Kelly you keep about <strong>' + (c.growthKeep * 100).toFixed(0) + '%</strong> of the growth (' + kcSignedPct(c.growth, 3) + ' instead of ' + kcSignedPct(c.peakGrowth, 3) + ' per bet) while your swings shrink to ' + (c.mult * 100).toFixed(0) + '% of full Kelly. That is the trade most professionals take.'
+                        : 'Full Kelly gives the fastest possible long-run growth (<strong>' + kcSignedPct(c.peakGrowth, 3) + ' per bet</strong>), but it also has the biggest drawdowns. If you are unsure about your win-chance estimate, drop to 50% or 25%.')));
+
+            /* --- simulate --- */
+            const startBal = c.bankroll > 0 ? c.bankroll : 1000;
+            const sim = kcSimulate(c.p, c.push, c.b, c.f, startBal, KC_SIM_RUNS, KC_SIM_BETS);
+
+            /* --- result panel --- */
+            kcText('kc-out-stake', kcMoney(c.stake));
+            kcText('kc-out-pct', c.noBet
+                ? (c.noEdge
+                    ? 'no bet — your ' + c.pPct.toFixed(1) + '% win chance is below the ' + c.implied.toFixed(1) + '% break-even rate'
+                    : 'no bet — your edge is only ' + kcSignedPct(c.edge, 3) + ', which rounds to nothing worth risking')
+                : kcPct(c.f, 2) + ' of your ' + kcMoney(c.bankroll) + ' bankroll');
+            kcText('kc-out-fstar', kcPct(c.fstar, 2));
+            kcText('kc-out-f', kcPct(c.f, 2));
+            const re = kcEl('kc-out-edge'); if (re) { re.textContent = kcSignedPct(c.edge, 2); re.style.color = edgeTone; }
+            const rv = kcEl('kc-out-ev'); if (rv) { rv.textContent = kcSignedMoney(c.ev); rv.style.color = c.ev >= 0 ? 'var(--primary)' : 'var(--danger)'; }
+            kcText('kc-out-growth', kcSignedPct(c.growth, 3));
+            kcText('kc-out-double', isFinite(c.doubleBets) ? Math.ceil(c.doubleBets).toLocaleString('en-US') + ' bets' : '—');
+            kcText('kc-out-profit', c.noBet ? '—' : (sim.probProfit * 100).toFixed(0) + '%');
+            kcText('kc-out-median', kcMoney(sim.medianFinal, 0));
+            kcText('kc-out-halfrisk', c.noBet ? '—' : (sim.dipped * 100).toFixed(0) + '%');
+            kcText('kc-out-p10', c.noBet ? '—' : kcMoney(sim.p10Final, 0));
+
+            const badges = [];
+            if (c.noBet) badges.push([c.noEdge ? 'bad' : 'warn', c.noEdge ? 'no edge — do not bet' : 'edge too small to bother']);
+            else if (c.edge > 0) badges.push(['ok', 'positive edge ' + kcSignedPct(c.edge, 1)]);
+            if (c.mult !== 1 && !c.noBet) badges.push([c.multAbove ? 'bad' : 'warn', (c.mult * 100).toFixed(0) + '% of full Kelly']);
+            if (c.capped) badges.push(['warn', 'limited by your ' + (c.cap * 100).toFixed(1) + '% cap']);
+            if (c.pushPct > 0) badges.push(['warn', c.pushPct.toFixed(1) + '% push chance removed']);
+            badges.push(['', c.D.toFixed(2) + ' odds · ' + c.pPct.toFixed(1) + '% chance']);
+            kcHTML('kc-out-badges', badges.map(b => '<span class="kc-badge ' + b[0] + '">' + b[1] + '</span>').join(''));
+
+            /* --- formula walkthrough --- */
+            const qLine = c.pushPct > 0
+                ? 'q = 1 − p − push = <b>' + c.q.toFixed(4) + '</b>'
+                : 'q = 1 − p = <b>' + c.q.toFixed(4) + '</b>';
+            kcHTML('kc-formula', ''
+                + kcFl('1. Turn the odds into b (the profit per $1 staked)',
+                    'b = decimal odds − 1 = ' + c.D.toFixed(2) + ' − 1 = <b>' + c.b.toFixed(2) + '</b>',
+                    c.b > 0 ? 'A ' + kcMoney(1) + ' stake wins ' + kcMoney(c.b) + ' if it lands.' : '')
+                + kcFl('2. Work out the edge (expected profit per $1)',
+                    'edge = p × b − q = ' + c.p.toFixed(4) + ' × ' + c.b.toFixed(2) + ' − ' + c.q.toFixed(4) + ' = <b>' + kcSignedPct(c.edge, 2) + '</b>' + (c.pushPct > 0 ? '<br><span style="color:var(--text-secondary)">' + qLine + ' — the push outcome is neither a win nor a loss</span>' : ''),
+                    c.edge > 0 ? 'Positive: the bet is worth making. Every $1 staked returns ' + kcSignedPct(c.edge, 2) + ' on average.' : 'Zero or negative: there is no stake that makes this bet profitable.')
+                + kcFl('3. Divide by b to get the Kelly stake %',
+                    'f* = edge ÷ b = ' + c.edge.toFixed(4) + ' ÷ ' + c.b.toFixed(2) + ' = <b>' + kcPct(c.fstar, 2) + '</b>',
+                    c.noBet ? 'Kelly returns 0% (or a negative number, which means the same thing): skip the bet.' : 'This is the stake that grows your bankroll fastest. More than this and you grow slower, not faster.')
+                + kcFl('4. Apply your aggression setting' + (c.cap > 0 ? ' and your cap' : ''),
+                    'your stake % = ' + kcPct(c.fstar, 2) + ' × ' + (c.mult * 100).toFixed(0) + '% (of full Kelly)'
+                    + (c.cap > 0 ? ' → capped at ' + kcPct(c.cap, 2) : '') + ' = <b>' + kcPct(c.f, 2) + '</b>',
+                    c.capped ? 'Your cap reduced the stake from ' + kcPct(c.fstar * c.mult, 2) + ' to ' + kcPct(c.f, 2) + '. Slower growth, but a smaller worst case.' : '100% of full Kelly = the fastest long-run growth. Lower percentages trade a little growth for a lot less stress.')
+                + kcFl('5. Turn the percentage into money',
+                    'stake = ' + kcPct(c.f, 2) + ' × ' + kcMoney(c.bankroll) + ' = <b>' + kcMoney(c.stake) + '</b><br>expected value = stake × edge = ' + kcMoney(c.stake) + ' × ' + c.edge.toFixed(4) + ' = <b>' + kcSignedMoney(c.ev) + '</b>',
+                    'Win: you end with ' + kcMoney(c.stake * c.b) + ' of profit (' + kcMoney(c.bankroll + c.stake * c.b) + ' bankroll). Lose: you drop to ' + kcMoney(Math.max(0, c.bankroll - c.stake)) + '.')
+                + kcFl('6. Check the growth rate this stake produces',
+                    'growth = p × ln(1 + f×b) + q × ln(1 − f) = ' + c.p.toFixed(4) + ' × ln(' + (1 + c.f * c.b).toFixed(4) + ') + ' + c.q.toFixed(4) + ' × ln(' + (1 - Math.min(c.f, 0.999999)).toFixed(4) + ') = <b>' + kcSignedPct(c.growth, 3) + ' per bet</b>',
+                    isFinite(c.doubleBets) ? 'Doubling your bankroll takes about ' + Math.ceil(c.doubleBets) + ' bets at this rate (ln 2 ÷ ' + c.growth.toFixed(5) + ').' : 'A negative growth rate means this stake loses money over time.'));
+
+            /* --- warning box --- */
+            const warn = kcWarning(c);
+            const wEl = kcEl('kc-warning');
+            if (wEl) { wEl.className = 'kc-warn ' + warn.tone + ' show'; wEl.innerHTML = warn.html; }
+
+            /* --- curve note --- */
+            const dHalf = 0.005;
+            const gUp = kcGrowthAt(kcClamp(c.p + dHalf, 0, 1 - c.push), c.push, c.b, c.f);
+            const gDn = kcGrowthAt(kcClamp(c.p - dHalf, 0, 1 - c.push), c.push, c.b, c.f);
+            kcHTML('kc-curve-note', c.noBet
+                ? 'Every stake above 0% produces negative growth for this bet, which is why the whole curve sits below zero. The best possible choice is the one you already have: <strong>don\'t bet</strong>.'
+                : 'At your stake of <strong>' + kcPct(c.f, 2) + '</strong> you expect <strong>' + kcSignedPct(c.growth, 3) + ' per bet</strong>. The peak of the curve is full Kelly at <strong>' + kcPct(c.fstar, 2) + '</strong>. Honesty check: if your win chance is really half a point lower (' + (c.p * 100 - 0.5).toFixed(1) + '%) the same stake grows ' + kcSignedPct(gDn, 3) + ' per bet, and half a point higher (' + (c.p * 100 + 0.5).toFixed(1) + '%) it grows ' + kcSignedPct(gUp, 3) + '. A small error in p matters more than a small error in arithmetic.');
+
+            /* --- pulse the card when the answer actually changes --- */
+            const card = kcEl('kc-result-card');
+            if (card && kcLastStake !== null && Math.abs(c.stake - kcLastStake) > 0.005) {
+                const now = Date.now();
+                if (now > kcFlashUntil) {
+                    card.classList.remove('kc-flash');
+                    void card.offsetWidth;                 // restart the CSS animation
+                    card.classList.add('kc-flash');
+                    kcFlashUntil = now + 900;
+                }
+            }
+
+            /* --- live chip for small screens --- */
+            kcLiveChip(c);
+
+            /* --- charts --- */
+            kcDrawCharts(c, sim);
+
+            kcLastStake = c.stake;
+        }
+
+        function kcScrollTo(target) {
+            const el = typeof target === 'string' ? kcEl(target) : target;
+            if (!el) return;
+            try { if (el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+            catch (e) { if (el.scrollIntoView) el.scrollIntoView(); }
+        }
+        function kcFl(title, math, why) {
+            return '<div class="kc-fl"><b>' + title + '</b><br>' + math + (why ? '<div class="kc-why">' + why + '</div>' : '') + '</div>';
+        }
+
+        function kcWarning(c) {
+            if (c.bankroll <= 0) return { tone: 'bad', html: '<strong>Enter a bankroll.</strong> Every answer here is a percentage of the money you have set aside, so the calculator needs a number greater than zero.' };
+            if (c.pushClamped) return { tone: 'warn', html: '<strong>Your push chance and your win chance add up to more than 100%.</strong> The push chance has been trimmed to ' + c.pushPct.toFixed(1) + '% so that the outcomes still add up. Check both boxes.' };
+            if (c.noEdge) return { tone: 'bad', html: '<strong>Don\'t make this bet.</strong> Kelly answers with 0%, not a small number. At ' + c.D.toFixed(2) + ' odds you need to win more than ' + c.implied.toFixed(1) + '% of the time to break even; you have told the calculator ' + c.pPct.toFixed(1) + '%. For this bet to be worth making at all, you would have to believe your chance is higher than ' + c.implied.toFixed(1) + '% — or find odds above ' + (c.p > 0 ? (100 / c.p).toFixed(2) : '—') + ' (the fair price for a ' + c.pPct.toFixed(1) + '% chance). Sizing cannot rescue a bad price.' };
+            if (c.noBet) return { tone: 'warn', html: '<strong>This is effectively a fair bet.</strong> Your edge is only ' + kcSignedPct(c.edge, 3) + ' per dollar staked, so the ideal stake is ' + kcPct(c.fstar, 4) + ' — about ' + kcMoney(c.fstar * c.bankroll, 2) + '. Kelly rounds that to nothing: betting a fair game only adds variance, it does not add profit. Look for a better price (above ' + (c.p > 0 ? (100 / c.p).toFixed(2) : '—') + ') or a higher chance.' };
+            if (c.f >= 0.5) return { tone: 'bad', html: '<strong>You are about to stake ' + kcPct(c.f, 1) + ' of your bankroll on one bet.</strong> That is extremely aggressive even when the maths supports it: a single loss takes you down to ' + kcMoney(c.bankroll * (1 - c.f)) + '. Double-check your win chance, then use half Kelly or set a cap.' };
+            if (c.multAbove) return { tone: 'warn', html: '<strong>You are above full Kelly (' + (c.mult * 100).toFixed(0) + '%).</strong> Betting more than the ideal stake does not grow your money faster — growth per bet drops from ' + kcSignedPct(c.peakGrowth, 3) + ' to ' + kcSignedPct(c.growth, 3) + ', while the risk keeps rising. Bring the multiplier back to 100% or below.' };
+            if (c.capped) return { tone: 'info', html: '<strong>Capped, as you asked.</strong> Full Kelly wanted ' + kcPct(c.fstar * c.mult, 2) + ' (' + kcMoney(Math.min(1, c.fstar * c.mult) * c.bankroll) + '), and your ' + kcPct(c.cap, 1) + ' cap holds it at ' + kcPct(c.f, 2) + ' (' + kcMoney(c.stake) + '). You give up some growth to shrink the worst case — a very common professional choice.' };
+            if (c.fstar >= 0.25) return { tone: 'warn', html: '<strong>Kelly is asking for ' + kcPct(c.fstar, 1) + ' of your bankroll.</strong> Very large fractions are usually a sign that your win chance is too optimistic rather than a sign of an amazing bet, especially when the payout is thin (b = ' + c.b.toFixed(2) + '). Ask yourself whether you would still like this bet at half your estimated edge.' };
+            if (c.mult < 1) return { tone: 'ok', html: '<strong>Sensible.</strong> You are at ' + (c.mult * 100).toFixed(0) + '% of full Kelly: about ' + (c.growthKeep * 100).toFixed(0) + '% of the fastest possible growth, with much smaller swings. Recalculate after the bet settles and stake the new percentage of your new bankroll.' };
+            return { tone: 'ok', html: '<strong>This is a positive-edge bet staked at full Kelly.</strong> Growth per bet is ' + kcSignedPct(c.growth, 3) + ' and nothing in the maths is asking you to be more careful. Place it, then recalculate from your new bankroll after the result — that is what makes the compounding work.' };
+        }
+
+        function kcLiveChip(c) {
+            const chip = kcEl('kc-live-chip'), card = kcEl('kc-result-card');
+            if (!chip || !card) return;
+            const val = kcEl('kc-chip-val');
+            if (val) val.textContent = kcMoney(c.stake) + ' · ' + kcPct(c.f, 2);
+            const onCalcTab = kcEl('tab-calc') && kcEl('tab-calc').style.display !== 'none';
+            const r = card.getBoundingClientRect();
+            const offScreen = r.bottom < 0 || r.top > (window.innerHeight || 0);
+            if (onCalcTab && offScreen && window.innerWidth <= 1000) {
+                chip.classList.add('show');
+                clearTimeout(kcChipTimer);
+                kcChipTimer = setTimeout(() => chip.classList.remove('show'), 3500);
+            } else {
+                chip.classList.remove('show');
+            }
+        }
+
+        /* ---------------- charts ---------------- */
+        function kcDrawCharts(c, sim) {
+            const tab = kcEl('tab-calc');
+            if (!tab || tab.style.display === 'none') return;
+            const cv1 = kcEl('kcCurveChart'), cv2 = kcEl('kcSimChart');
+            if (!cv1 || !cv2 || typeof Chart === 'undefined') return;
+
+            /* --- chart 1: growth vs stake size --- */
+            const fstarDisp = c.fstar > 1e-9 ? c.fstar : 0;
+            let xMax = fstarDisp > 0 ? kcClamp(Math.max(fstarDisp * 2.2, c.f * 1.4, 0.05), 0.05, 1) : 0.4;
+            const pts = [];
+            const N = 120;
+            for (let i = 0; i <= N; i++) {
+                const f = xMax * i / N;
+                pts.push({ x: f * 100, y: kcGrowthAt(c.p, c.push, c.b, f) * 100 });
+            }
+            const peakY = kcGrowthAt(c.p, c.push, c.b, fstarDisp) * 100;
+            const zeroF = kcZeroCross(c.p, c.push, c.b, fstarDisp, xMax);
+            const datasets1 = [
+                { label: 'Growth per bet (%)', data: pts, borderColor: '#2ea043', backgroundColor: 'rgba(46,160,67,0.10)', borderWidth: 2, pointRadius: 0, tension: 0.15, fill: true },
+                { label: 'Break-even (0 growth)', data: [{ x: 0, y: 0 }, { x: xMax * 100, y: 0 }], borderColor: '#30363d', borderWidth: 1, borderDash: [4, 4], pointRadius: 0 }
+            ];
+            if (fstarDisp > 0) datasets1.push({ label: 'Full Kelly ' + kcPct(c.fstar, 2), data: [{ x: fstarDisp * 100, y: 0 }, { x: fstarDisp * 100, y: peakY }], borderColor: '#58a6ff', borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0 });
+            if (!c.noBet) datasets1.push({ label: 'Your stake ' + kcPct(c.f, 2), data: [{ x: c.f * 100, y: Math.min(0, peakY) }, { x: c.f * 100, y: Math.max(peakY, 0) }], borderColor: '#d29922', borderWidth: 2, pointRadius: 0 });
+            if (zeroF !== null) datasets1.push({ label: 'Losing money past ' + kcPct(zeroF, 1), data: [{ x: zeroF * 100, y: 0 }, { x: zeroF * 100, y: peakY }], borderColor: '#f85149', borderWidth: 1.5, borderDash: [2, 3], pointRadius: 0 });
+
+            if (!kcCurveChart) {
+                kcCurveChart = new Chart(cv1.getContext('2d'), {
+                    type: 'line',
+                    data: { datasets: datasets1 },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, animation: false, parsing: false, normalized: true,
+                        interaction: { mode: 'nearest', intersect: false },
+                        plugins: {
+                            legend: { display: true, labels: { color: '#8b949e', font: { size: 9 }, boxWidth: 14, filter: item => item.text.indexOf('Break-even') !== 0 } },
+                            tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(3) + '% growth at ' + ctx.parsed.x.toFixed(1) + '% stake' } }
+                        },
+                        scales: {
+                            x: { type: 'linear', min: 0, max: xMax * 100, grid: { color: '#1c2128' }, ticks: { color: '#6e7681', font: { size: 9 }, callback: v => v + '%' }, title: { display: true, text: 'stake as % of bankroll', color: '#6e7681', font: { size: 9 } } },
+                            y: { grid: { color: '#1c2128' }, ticks: { color: '#6e7681', font: { size: 9 }, callback: v => v.toFixed(2) + '%' }, title: { display: true, text: 'expected growth per bet', color: '#6e7681', font: { size: 9 } } }
+                        }
+                    }
+                });
+            } else {
+                kcCurveChart.data.datasets = datasets1;
+                kcCurveChart.options.scales.x.max = xMax * 100;
+                kcCurveChart.update('none');
+            }
+
+            /* --- chart 2: simulated paths --- */
+            const labels = sim.p50.map((_, i) => i + 1);
+            const datasets2 = [
+                { label: 'Worst 10% of runs', data: sim.p10, borderColor: 'rgba(88,166,255,0.0)', backgroundColor: 'rgba(88,166,255,0.10)', borderWidth: 0, pointRadius: 0, fill: '+1' },
+                { label: 'Best 10% of runs', data: sim.p90, borderColor: 'rgba(88,166,255,0.0)', backgroundColor: 'rgba(88,166,255,0.0)', borderWidth: 1, borderDash: [], pointRadius: 0 },
+                { label: 'Typical (median) run', data: sim.p50, borderColor: '#2ea043', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.1 },
+                { label: 'Starting bankroll', data: labels.map(() => c.bankroll > 0 ? c.bankroll : 1000), borderColor: '#30363d', borderWidth: 1, borderDash: [4, 4], pointRadius: 0 }
+            ];
+            if (!kcSimChart) {
+                kcSimChart = new Chart(cv2.getContext('2d'), {
+                    type: 'line',
+                    data: { labels: labels, datasets: datasets2 },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, animation: false,
+                        plugins: {
+                            legend: { display: true, labels: { color: '#8b949e', font: { size: 9 }, boxWidth: 14, filter: item => item.text.indexOf('Best 10') !== 0 } },
+                            tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + kcMoney(ctx.parsed.y, 0) } }
+                        },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: '#6e7681', font: { size: 9 }, maxTicksLimit: 6 }, title: { display: true, text: 'bet number', color: '#6e7681', font: { size: 9 } } },
+                            y: { grid: { color: '#1c2128' }, ticks: { color: '#6e7681', font: { size: 9 }, callback: v => kcShortMoney(v) } }
+                        }
+                    }
+                });
+            } else {
+                kcSimChart.data.labels = labels;
+                kcSimChart.data.datasets = datasets2;
+                kcSimChart.update('none');
+            }
+        }
+
+        /* ---------------- history ---------------- */
+        function kcLoadHistory() {
+            try {
+                const raw = localStorage.getItem(KC_STORE_KEY);
+                kcHistory = raw ? JSON.parse(raw) : [];
+                if (!Array.isArray(kcHistory)) kcHistory = [];
+            } catch (e) { kcHistory = []; }
+        }
+        function kcPersistHistory() {
+            try { localStorage.setItem(KC_STORE_KEY, JSON.stringify(kcHistory)); }
+            catch (e) {
+                const n = kcEl('kc-hist-note');
+                if (n) { n.style.display = 'block'; n.className = 'kc-warn warn show'; n.textContent = 'Could not save to this browser (storage may be full or blocked). Your history will last only for this visit.'; }
+            }
+        }
+        function kcSaveEntry() {
+            const c = kcCompute();
+            const now = new Date();
+            const entry = {
+                id: 'kc' + Date.now() + Math.random().toString(36).slice(2, 7),
+                ts: now.getTime(),
+                label: (kcState.label || '').trim() || 'Untitled bet',
+                decimal: c.D, american: kcDecimalToAmerican(c.D), frac: kcDecimalToFraction(c.D),
+                p: c.pPct, push: c.pushPct, bankroll: c.bankroll, mult: c.mult * 100, cap: c.cap * 100,
+                edge: c.edge, fstar: c.fstar, f: c.f, stake: c.stake, ev: c.ev, growth: c.growth, noBet: c.noBet,
+                fmt: kcState.fmt
+            };
+            kcHistory.unshift(entry);
+            if (kcHistory.length > KC_MAX_HISTORY) kcHistory = kcHistory.slice(0, KC_MAX_HISTORY);
+            kcPersistHistory();
+            kcRenderHistory();
+            const btn = kcEl('kc-save-btn');
+            if (btn) {
+                const old = btn.textContent;
+                btn.textContent = '✓ Saved';
+                btn.disabled = true;
+                setTimeout(() => { btn.textContent = old; btn.disabled = false; }, 1200);
+            }
+        }
+        function kcRenderHistory() {
+            const wrap = kcEl('kc-hist-wrap');
+            kcText('kc-hist-count', kcHistory.length + (kcHistory.length === 1 ? ' saved calculation' : ' saved calculations'));
+            if (!wrap) return;
+            if (!kcHistory.length) {
+                wrap.innerHTML = '<div class="kc-empty">Nothing saved yet. Fill in the calculator above and press <strong>💾 Save to history</strong> — the row will appear here, and it will still be here next time you open this page on this device.</div>';
+                return;
+            }
+            const rows = kcHistory.map((e, i) => {
+                const d = new Date(e.ts);
+                const when = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '<br>' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                const tone = e.edge > 0 ? 'var(--primary)' : 'var(--danger)';
+                const name = String(e.label).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return '<tr>'
+                    + '<td style="color:var(--text-secondary)">' + when + '</td>'
+                    + '<td class="kc-name">' + name + '<br><span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--text-secondary)">' + (e.noBet ? '<span style="color:var(--danger)">no bet</span>' : 'stake ' + kcPct(e.f, 1)) + '</span></td>'
+                    + '<td>' + e.p.toFixed(1) + '%</td>'
+                    + '<td>' + e.decimal.toFixed(2) + '<br><span style="font-size:10px;color:var(--text-secondary)">' + e.frac + ' · ' + e.american + '</span></td>'
+                    + '<td style="color:' + tone + '">' + kcSignedPct(e.edge, 1) + '</td>'
+                    + '<td>' + kcPct(e.fstar, 1) + '<br><span style="font-size:10px;color:var(--text-secondary)">×' + (e.mult / 100).toFixed(2) + '</span></td>'
+                    + '<td><strong>' + kcMoney(e.stake) + '</strong><br><span style="font-size:10px;color:var(--text-secondary)">of ' + kcMoney(e.bankroll) + '</span></td>'
+                    + '<td>' + kcSignedPct(e.growth, 3) + '</td>'
+                    + '<td style="text-align:right; white-space:nowrap">'
+                    + '<button class="kc-btn kc-btn-ghost kc-btn-sm" type="button" onclick="kcLoadEntry(' + i + ')">Load</button> '
+                    + '<button class="kc-btn kc-btn-danger kc-btn-sm" type="button" onclick="kcDeleteEntry(' + i + ')">Delete</button>'
+                    + '</td></tr>';
+            }).join('');
+            wrap.innerHTML = '<table class="kc-table"><thead><tr>'
+                + '<th>When</th><th>Bet</th><th>Your chance</th><th>Odds</th><th>Edge</th><th>Kelly %</th><th>Your stake</th><th>Growth / bet</th><th></th>'
+                + '</tr></thead><tbody>' + rows + '</tbody></table>';
+        }
+        function kcLoadEntry(i) {
+            const e = kcHistory[i];
+            if (!e) return;
+            kcState.decimal = e.decimal;
+            kcState.p = e.p;
+            kcState.push = e.push || 0;
+            kcState.bankroll = e.bankroll;
+            kcState.mult = e.mult || 100;
+            kcState.cap = e.cap || 0;
+            kcState.label = e.label === 'Untitled bet' ? '' : e.label;
+            kcSetFmt(e.fmt || 'decimal');
+            kcUpdate();
+            kcScrollTo('kc-top');
+        }
+        function kcDeleteEntry(i) {
+            kcHistory.splice(i, 1);
+            kcPersistHistory();
+            kcRenderHistory();
+        }
+        function kcClearHistory() {
+            if (!kcHistory.length) return;
+            if (!window.confirm('Delete all ' + kcHistory.length + ' saved calculations? This cannot be undone.')) return;
+            kcHistory = [];
+            kcPersistHistory();
+            kcRenderHistory();
+        }
+        function kcExportCsv() {
+            if (!kcHistory.length) { window.alert('There is nothing to export yet — save a calculation first.'); return; }
+            const head = ['Saved', 'Bet', 'Decimal odds', 'Fractional', 'American', 'Win chance %', 'Push %', 'Bankroll', 'Edge', 'Full Kelly %', 'Kelly multiplier %', 'Cap %', 'Stake %', 'Stake amount', 'Expected value', 'Growth per bet %', 'No bet'];
+            const esc = v => '"' + String(v).replace(/"/g, '""') + '"';
+            const lines = [head.map(esc).join(',')];
+            kcHistory.forEach(e => {
+                lines.push([new Date(e.ts).toLocaleString(), e.label, e.decimal.toFixed(2), e.frac, e.american, e.p.toFixed(2), e.push.toFixed(2),
+                e.bankroll.toFixed(2), e.edge.toFixed(4), (e.fstar * 100).toFixed(2), e.mult.toFixed(0), e.cap.toFixed(2),
+                (e.f * 100).toFixed(2), e.stake.toFixed(2), e.ev.toFixed(2), (e.growth * 100).toFixed(4), e.noBet ? 'yes' : 'no'].map(esc).join(','));
+            });
+            const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'kelly-calculations-' + new Date().toISOString().slice(0, 10) + '.csv';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+        }
+
+        /* ---------------- examples, reset, no-vig helper ---------------- */
+        const kcExamples = {
+            even: { label: 'Coin: heads 55%, paid even money', D: 2.00, p: 55, push: 0, bankroll: 1000, mult: 100, cap: 0 },
+            die6: { label: 'Roll a 6, paid 6.00 (fair)', D: 6.00, p: 16.6667, push: 0, bankroll: 1000, mult: 100, cap: 0 },
+            die7: { label: 'Roll a 6, paid 7.00', D: 7.00, p: 16.6667, push: 0, bankroll: 1000, mult: 100, cap: 0 },
+            dog: { label: 'Underdog +150, my chance 45%', D: 2.50, p: 45, push: 0, bankroll: 1000, mult: 100, cap: 0 },
+            fav: { label: 'Favorite -200, my chance 75%', D: 1.50, p: 75, push: 0, bankroll: 1000, mult: 100, cap: 0 },
+            horse: { label: 'Horse at 3/1, my chance 35%', D: 4.00, p: 35, push: 0, bankroll: 1000, mult: 100, cap: 0 },
+            roulette: { label: 'Roulette single number (no edge)', D: 36.00, p: 2.703, push: 0, bankroll: 1000, mult: 100, cap: 0 }
+        };
+        function kcLoadExample(k) {
+            const e = kcExamples[k];
+            if (!e) return;
+            kcState.label = e.label; kcState.decimal = e.D; kcState.p = e.p;
+            kcState.push = e.push; kcState.bankroll = e.bankroll; kcState.mult = e.mult; kcState.cap = e.cap;
+            kcSetFmt('decimal');
+            kcUpdate();
+            kcScrollTo('kc-top');
+        }
+        function kcReset() {
+            kcState.label = ''; kcState.decimal = 2.00; kcState.p = 50; kcState.push = 0;
+            kcState.bankroll = 1000; kcState.mult = 100; kcState.cap = 0; kcState.other = 1.80;
+            kcState.fracNum = 1; kcState.fracDen = 1;
+            kcEl('kc-in-label').value = '';
+            kcSetFmt('decimal');
+            kcUpdate();
+        }
+        function kcUseFair() {
+            const c = kcCompute();
+            const other = Math.max(1.01, kcState.other || 1.01);
+            const total = c.implied + 100 / other;
+            const fairPct = 100 * (c.implied / total);
+            kcState.p = Math.round(fairPct * 100) / 100;
+            kcUpdate();
+        }
+
+        /* ---------------- tab switching + init ---------------- */
+        function kcShowTab(name) { switchTab(name); }
+        let kcRaf = null;
+        function kcScheduleUpdate() {
+            if (kcRaf) return;
+            kcRaf = requestAnimationFrame(() => { kcRaf = null; kcUpdate(); });
+        }
+        function kcApplyHash() {
+            const h = (location.hash || '').replace('#', '');
+            if (h === 'kc-history' || h === 'kc-charts-block' || h === 'kc-explainer' || h === 'kc-definitions' || h === 'kc-examples' || h === 'kc-odds' || h === 'kc-top') kcShowTab('calc');
+        }
+        function kcInit() {
+            if (kcEl('kc-hist-note')) kcEl('kc-hist-note').className = 'kc-warn info';
+            kcState.other = parseFloat(kcEl('kc-in-other') ? kcEl('kc-in-other').value : '1.8') || 1.8;
+            kcLoadHistory();
+            kcRenderHistory();
+            kcSetFmt('decimal');
+            kcUpdate();
+            kcApplyHash();
+            window.addEventListener('resize', () => {
+                if (kcEl('tab-calc') && kcEl('tab-calc').style.display !== 'none') {
+                    if (kcCurveChart) kcCurveChart.resize();
+                    if (kcSimChart) kcSimChart.resize();
+                }
+                kcScheduleUpdate();
+            });
+        }
+
     </script>
 </body>
 </html>
